@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <curses.h>
-#include "rana.h"
+#include "frog.h"
 #include "croc.h"
 #include "graphics.h"
 
