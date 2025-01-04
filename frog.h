@@ -1,15 +1,15 @@
 
 #ifndef FROG_H
 #define FROG_H
-
+#include "graphics.h"
 // Definizione delle dimensioni della rana
 #define FROG_WIDTH 9
 #define FROG_HEIGHT 4
 
 // Struttura che rappresenta la posizione della rana
-typedef struct {
+/*typedef struct {
     int x, y; // Posizione della rana sullo schermo
-} Coordinate;
+} Coordinate; */
 
 // Funzioni per la gestione della rana
 void initFrog(Coordinate *frog);

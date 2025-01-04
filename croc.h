@@ -4,7 +4,7 @@
 #include "graphics.h"
 
 
-void frog(Coordinate *frog, int fileds[2]);
+void croc(Coordinate *croc, int fileds[2]);
 
 
 #endif

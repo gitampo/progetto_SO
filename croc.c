@@ -5,6 +5,7 @@
 #include <curses.h>
 #include <time.h>
 #include "croc.h"
+#include "frog.h"
 
 void croc(Coordinate *croc, int fileds[2]){
 
