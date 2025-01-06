@@ -12,8 +12,8 @@
 } Coordinate; */
 
 // Funzioni per la gestione della rana
-void initFrog(Coordinate *frog);
-void drawFrog(Coordinate *frog);
-void moveFrog(Coordinate *frog, int direction); // Gestisce il movimento della rana
+void initFrog(Coordinate *frog1);
+void drawFrog(Coordinate *frog1);
+void frog(Coordinate *frog1, int fileds[2]); // Gestisce il movimento della rana
 
 #endif // FROG_H

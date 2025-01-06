@@ -7,7 +7,7 @@
 #include "croc.h"
 #include "graphics.h"
 
-#define SPRITE_FROG 'A'
+#define SPRITE_FROG 'F'
 #define SPRITE_CROC 'CCCCCCCCCCC'
 
 int main() {
@@ -21,7 +21,7 @@ int main() {
 
     // Inizializza le coordinate con ID
     Coordinate frog1 = {1, LINES - 2, COLS / 2}; // ID 1 per la rana
-    Coordinate croc1 = {2, COLS, COLS};                 // ID 2 per il coccodrillo
+    Coordinate croc1 = {2, LINES  - 2, COLS - 4}; // ID 2 per il coccodrillo
     Coordinate temp;
 
     mvaddch(frog1.y, frog1.x, SPRITE_FROG);
