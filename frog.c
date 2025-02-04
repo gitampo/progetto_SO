@@ -44,6 +44,7 @@ void frog(Coordinate *frog1, int fileds[2]) {
     }
 
     write(fileds[1], frog1, sizeof(Coordinate));
-    usleep(10000);
+    refresh();
+    usleep(50000);
     } 
 }

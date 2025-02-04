@@ -7,21 +7,31 @@
 #include "croc.h"
 #include "frog.h"
 
-void croc(Coordinate *croc1, int fileds[2]){
+void croc(Coordinate *croc, int fileds[2]){
+
+int counter = 0;
 
     while(1){
 
-    // Gestisce il looping ai bordi della finestra
+    if (counter % 5 == 0) // Muove il coccodrillo ogni 5 cicli
+        croc->x += 1;
     
-    if (croc1->x >= COLS - 2) {
-        croc1->x = COLS - 20; // Ricomincia dal bordo sinistro (è sbagliato stavo provando)
-        croc1->x += 1;
-    } else if (croc1->x <= COLS -21) {
-        croc1->x = COLS- 2; // Ricomincia dal bordo destro (è sbagliato stavo provando)
-        croc1->x -= 1;
+    // Controlla se è uscito dallo schermo
+    if (croc->x > 177) {
+        croc->x = -11;  // Riappare sul lato opposto
+    } else if (croc->x < -11) {
+        croc->x = 177;  // Riappare sul lato opposto
     }
+
+    write(fileds[1], croc, sizeof(Coordinate));
+    refresh();
+    
+    counter++;
+    usleep(50000);
+
+    }
+
+    
 }
 
-    write(fileds[1], croc1, sizeof(Coordinate));
-    usleep(10000);
-}
+//larghezza = 178, altezza 14
