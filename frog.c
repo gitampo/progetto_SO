@@ -1,50 +1,38 @@
 #include "frog.h"
-#include <ncurses.h>
+#include <ncurses.h>   // getch()
+#include <unistd.h>    // write(), usleep()
+#include <signal.h>    // SIGKILL se serve
 
-// Disegno ASCII della rana
-const char *frog1[] = {
-    "         @..@",
-    "        (----)",
-    "       ( >__< )",
-    "       ^^ ~~ ^^"
-};
+/*
+ * Funzione eseguita dal FIGLIO "rana":
+ *  - Chiude lettura pipe
+ *  - In un while(1), fa getch(), aggiorna (x,y), e scrive su pipe
+ *
+ *  Attenzione: spesso getch() non funziona nei figli,
+ *  perché solo il padre ha initscr(). 
+ *  Questo esempio è didattico; potrebbe non funzionare su alcuni terminali.
+ */
+void frogProcess(FrogData* frog, int pipefd[2])
+{
+    // Chiude lettura
+    close(pipefd[0]);
 
-// Funzione che inizializza la posizione della rana
-void initFrog(Coordinate *frog1) {
-    frog1->x = COLS / 2 - FROG_WIDTH / 2; // Posiziona la rana al centro orizzontalmente
-    frog1->y = LINES - FROG_HEIGHT - 1;  // Posiziona la rana al fondo dello schermo
-}
+    // Ciclo infinito
+    while(1) {
+        // Leggi tasto
+        int ch = getch(); 
+        switch(ch) {
+            case KEY_UP:    frog->y--; break;
+            case KEY_DOWN:  frog->y++; break;
+            case KEY_LEFT:  frog->x--; break;
+            case KEY_RIGHT: frog->x++; break;
+            default:
+                // ignora
+                break;
+        }
 
-void drawFrog(Coordinate *frogPosition) {
-    // Ciclo per disegnare ogni linea dell'arte ASCII della rana
-    for (int i = 0; i < FROG_HEIGHT; i++) {
-        mvprintw(frogPosition->y + i, frogPosition->x, frog1[i]);
+        // Scrivi la struct aggiornata
+        write(pipefd[1], frog, sizeof(*frog));
+        usleep(50000);
     }
-    refresh();
-}
-
-// Funzione per muovere la rana in base ai tasti direzionali
-void frog(Coordinate *frog1, int fileds[2]) {
-
-    while(1){
-
-    switch (getch()) {
-        case KEY_UP:
-            if (frog1->y > 1) frog1->y -= 1;
-            break;
-        case KEY_DOWN:
-            if (frog1->y < LINES - FROG_HEIGHT - 1) frog1->y += 1;
-            break;
-        case KEY_LEFT:
-            if (frog1->x > 1) frog1->x -= 1;
-            break;
-        case KEY_RIGHT:
-            if (frog1->x < COLS - FROG_WIDTH - 1) frog1->x += 1;
-            break;
-    }
-
-    write(fileds[1], frog1, sizeof(Coordinate));
-    refresh();
-    usleep(50000);
-    } 
 }
