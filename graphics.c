@@ -1,10 +1,10 @@
 #include "graphics.h"
 
 #define CHAR_MARCIAPIEDE '='
-#define CHAR_FIUME       '~'
+#define CHAR_FIUME       ' '
 #define CHAR_ERBA        '@'
-#define CHAR_TANA_APERTA ' '
-#define CHAR_TANA_CHIUSA '#'
+#define CHAR_TANA_APERTA '0'
+#define CHAR_TANA_CHIUSA ' '
 
 static void riempiRettangolo(const Rettangolo* r, char ch){
     for(int row=0; row<r->height; row++){
@@ -19,19 +19,19 @@ void initAreaGioco(AreaGioco* area, int maxX, int maxY){
     area->larghezzaSchermo = maxX;
     area->altezzaSchermo   = maxY;
 
-    area->marciapiedeBasso.height = 3;
+    area->marciapiedeBasso.height = 2;
     area->marciapiedeBasso.width  = maxX;
     area->marciapiedeBasso.startX = 0;
     area->marciapiedeBasso.startY = maxY - 3;
 
-    int flussoH=3;
+    int flussoH = 2;
     for(int i=0; i<NUM_FLUSSI; i++){
         area->fiume[i].width  = maxX;
         area->fiume[i].height = flussoH;
         area->fiume[i].startX = 0;
         area->fiume[i].startY = area->marciapiedeBasso.startY - (i+1)*flussoH;
     }
-    area->marciapiedeAlto.height = 3;
+    area->marciapiedeAlto.height = 2;
     area->marciapiedeAlto.width  = maxX;
     area->marciapiedeAlto.startX = 0;
     area->marciapiedeAlto.startY = area->fiume[NUM_FLUSSI-1].startY - 3;

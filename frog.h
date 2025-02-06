@@ -4,7 +4,7 @@
 // Simboli ASCII (gamelogic.c li userà per disegnare la rana)
 #define SYMBOL_FROG_1 " @..@"
 #define SYMBOL_FROG_2 "(----)"
-#define SYMBOL_FROG_3 " ^^ ^^"
+#define SYMBOL_FROG_3 " ^^^^"
 
 /*
  * Struttura della Rana

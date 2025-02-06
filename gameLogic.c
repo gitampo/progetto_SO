@@ -1,4 +1,4 @@
-#include "gamelogic.h"
+#include "gameLogic.h"
 
 // Funzione bounding box collision
 int checkCollision(int x1,int y1,int w1,int h1,int x2,int y2,int w2,int h2){

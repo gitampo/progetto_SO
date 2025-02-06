@@ -7,7 +7,7 @@
 
 #include "config.h"
 #include "graphics.h"
-#include "gamelogic.h"
+#include "gameLogic.h"
 #include "frog.h"
 #include "croc.h"
 
