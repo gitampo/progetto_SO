@@ -1,5 +1,10 @@
 #include "gameLogic.h"
 
+#include "gameLogic.h"
+
+// Definizione della variabile globale
+CrocData activeCrocs[MAX_CROCS];
+
 // Funzione bounding box collision
 int checkCollision(int x1,int y1,int w1,int h1,int x2,int y2,int w2,int h2){
     if(x1 + w1 <= x2) return 0;
@@ -25,8 +30,10 @@ void drawCrocPos(const CrocData* c){
 }
 
 // Disegno granata
-void drawGrenadePos(const GrenadeData* g){
-    mvaddch(g->y, g->x, SYMBOL_GRENADE);
+void drawGrenadePos(const GrenadeData* g) {
+    if (g->active) {
+        mvaddch(g->y, g->x, SYMBOL_GRENADE);
+    }
 }
 
 // Disegno proiettile

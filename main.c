@@ -10,6 +10,10 @@
 #include "gameLogic.h"
 #include "frog.h"
 #include "croc.h"
+#include "grenade.h"
+
+// 1) Includi scoreboard
+#include "scoreboard.h"
 
 #define NUM_CROCS 1  // Per esempio 1 coccodrillo
 
@@ -33,13 +37,11 @@ int main(void)
     clear();
     disegnaAreaGioco(&area);
 
-    // 4) Prepara la RANA da passare al figlio
-    //    (La struct iniziale è su stack, la passiamo per value a fork,
-    //     ma meglio se la mettiamo su variabile globale o static. Esempio semplificato.)
+    // 4) Prepara la RANA 
     static FrogData frog; 
     frog.id     = 1;
-    frog.x      = maxX/2;
-    frog.y      = area.marciapiedeBasso.startY - 3; // 3 righe di ASCII
+    frog.x = area.larghezzaSchermo / 2 + area.marciapiedeBasso.startX;
+    frog.y = area.marciapiedeBasso.startY - 3;
     frog.width  = 5;
     frog.height = 3;
     frog.lives  = 3;
@@ -47,12 +49,16 @@ int main(void)
     // 5) Prepara il Coccodrillo
     static CrocData croc;
     croc.id     = 2; 
-    croc.x      = 5; 
-    croc.y      = area.fiume[0].startY + 1;
+    croc.x = area.fiume[0].startX + 5;
+    croc.y = area.fiume[0].startY + 1;
     croc.oldX   = croc.x;
     croc.width  = 4;
     croc.height = 2;
     croc.alive  = 1;
+
+    // 5bis) Creiamo e inizializziamo la scoreboard 
+    ScoreBoard sb;
+    initScoreBoard(&sb, 3, 60);
 
     // 6) Crea la pipe
     int pipefd[2];
@@ -70,9 +76,7 @@ int main(void)
         exit(1);
     }
     if (pidFrog == 0) {
-        // figlio rana
         frogProcess(&frog, pipefd);
-        // se esce dal while, break
         exit(0);
     }
 
@@ -84,7 +88,6 @@ int main(void)
         exit(1);
     }
     if (pidCroc == 0) {
-        // figlio cocc
         crocProcess(&croc, pipefd);
         exit(0);
     }
@@ -92,82 +95,107 @@ int main(void)
     // 9) Processo padre chiude la scrittura
     close(pipefd[1]);
 
-    // Variabili locali per salvare la posizione aggiornata
-    // da ogni messaggio in arrivo
-    FrogData frogPos = frog;    // copia
-    CrocData crocPos = croc;    // copia
+    // Copie locali delle strutture 
+    FrogData frogPos = frog;   
+    CrocData crocPos = croc;   
+    GrenadeData grenadePos;  // Per gestire le granate
 
-    // ESEMPIO: se vuoi più coccodrilli, puoi avere un array di CrocData
-
-    // 10) Main loop: il padre legge dalla pipe e disegna
     int running = 1;
     while (running) {
-        // Leggo un messaggio generico (dimensione max tra FrogData e CrocData)
-        // Qui assumo che i figli scrivano la stessa dimensione di struct
-        // e che il "id" distingua chi è chi
-        char buffer[sizeof(CrocData)]; 
-        int n = read(pipefd[0], buffer, sizeof(CrocData));
-        if (n <= 0) {
-            // Nessun dato => facciamo un piccolo sleep e ridisegniamo
-            usleep(30000);
-        } else {
-            // Interpretiamo i primi 4 byte come "id"
+        // Legge un messaggio dalla pipe (massima dimensione tra le strutture)
+        char buffer[sizeof(GrenadeData)];
+        int n = read(pipefd[0], buffer, sizeof(GrenadeData));
+        if (n > 0) {
             int *pId = (int*) buffer;
             int who = *pId;
-
-            if (who == 1) {
-                // è la rana
+            
+            if (who == 1) {  // RANA
                 FrogData *fptr = (FrogData*) buffer;
                 frogPos = *fptr;
-            } else if (who == 2) {
-                // è il coccodrillo
+            } 
+            else if (who == 2) {  // COCCODRILLO
                 CrocData *cptr = (CrocData*) buffer;
                 crocPos = *cptr;
+            } 
+            else if (who == 3) {  // GRANATA
+                GrenadeData *gptr = (GrenadeData*) buffer;
+                grenadePos = *gptr;
+            
+                // Controllo collisione granata-coccodrillo
+                if (checkCollision(grenadePos.x, grenadePos.y, grenadePos.width, grenadePos.height,
+                                   crocPos.x, crocPos.y, crocPos.width, crocPos.height)) {
+                    crocPos.alive = 0;  // Il coccodrillo viene eliminato
+                    grenadePos.active = 0;  // La granata sparisce
+                }
             }
-            // Se avessi più coccodrilli con id 2..N,
-            // puoi avere un array e fare cPos[id-2] = *cptr, ecc.
+            
         }
 
-        // 11) Ridisegna l’area + personaggi
+        // 1) Pulisce e ridisegna l'area di gioco
         clear();
         disegnaAreaGioco(&area);
 
-        // Disegna la rana
+        // 2) Disegna scoreboard
+        drawScoreBoard(&sb);
+
+        // 3) Disegna rana, coccodrillo e granata
         drawFrogPos(&frogPos);
-
-        // Disegna cocc
         drawCrocPos(&crocPos);
+        drawGrenadePos(&grenadePos);  // Disegna la granata
 
-        // Se vuoi collisioni
+        // 4) Controlla collisione rana-coccodrillo
         if (checkCollision(frogPos.x, frogPos.y, frogPos.width, frogPos.height,
                            crocPos.x, crocPos.y, crocPos.width, crocPos.height)) {
-            // collisione => riduci vite, reset
-            frogPos.lives--;
+            decrementLife(&sb);
             frogPos.x = maxX/2;
             frogPos.y = area.marciapiedeBasso.startY - 3;
-            if (frogPos.lives <= 0) {
+
+            if (sb.vite <= 0) {
                 mvprintw(maxY/2, (maxX/2)-5, "GAME OVER");
                 refresh();
                 sleep(2);
-                running=0;
+                running = 0;
             }
         }
 
-        // check tana
-        int idxTana = checkTane(&area, frogPos.x, frogPos.y, frogPos.width, frogPos.height);
-        if(idxTana >= 0){
-            // la rana e' in tana
-            chiudiTana(&area.tane[idxTana]);
-            // rimetti la rana in basso
-            frogPos.x = maxX/2;
-            frogPos.y = area.marciapiedeBasso.startY - 3;
+        // 5) Controllo collisione granata-coccodrillo
+        if (checkCollision(grenadePos.x, grenadePos.y, grenadePos.width, grenadePos.height,
+                           crocPos.x, crocPos.y, crocPos.width, crocPos.height)) {
+            crocPos.alive = 0;  // Il coccodrillo viene eliminato
+            grenadePos.active = 0;  // La granata sparisce
         }
 
+        // Controllo se la rana entra in una tana
+     int idxTana = checkTane(&area, frogPos.x, frogPos.y, 
+    frogPos.width, frogPos.height);
+
+    if(idxTana >= 0){
+        addScore(&sb, 100);
+        chiudiTana(&area.tane[idxTana]);
+    
+        // Nuova posizione della rana nel marciapiede inferiore
+        frogPos.x = area.marciapiedeBasso.startX + area.larghezzaSchermo / 2;
+        frogPos.y = area.marciapiedeBasso.startY + 1;
+    
+        // Imposta ID speciale per segnalare aggiornamento della posizione
+        frogPos.id = -1;
+    
+        // **Invia immediatamente la nuova posizione al processo rana**
+        write(pipefd[1], &frogPos, sizeof(FrogData));
+    
+        // **Aspetta un momento per sincronizzare i processi**
+        usleep(100000);
+    }
+    
+    
+    
+        
+        // 7) refresh finale
         refresh();
         usleep(30000);
     }
 
-    // 12) Fine: kill figli e aspetta
+    // Fine: kill dei figli
     endwin();
     kill(pidFrog, SIGKILL);
     kill(pidCroc, SIGKILL);

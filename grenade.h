@@ -8,6 +8,10 @@ typedef struct {
     int x, y;
     int width, height;
     int active;
+    int dir;  // Direzione di movimento (-1 sinistra, 1 destra)
 } GrenadeData;
+
+// Funzione per far muovere la granata come processo separato
+void grenade(GrenadeData* g, int pipeWrite);
 
 #endif // GRENADE_H

@@ -12,14 +12,11 @@
 
 #define MAX_CROCS 50
 
-// Struttura di "messaggio" unificato, se vuoi
-// In alternativa puoi usare direttamente FrogData/CrocData
-// ...
-// extern CrocData activeCrocs[MAX_CROCS];
-// extern int nCrocs;
+// Dichiarazione esterna della variabile globale (definita in gameLogic.c)
+extern CrocData activeCrocs[MAX_CROCS];  
 
 // Funzione di collisione bounding box
-int checkCollision(int x1,int y1,int w1,int h1,int x2,int y2,int w2,int h2);
+int checkCollision(int x1, int y1, int w1, int h1, int x2, int y2, int w2, int h2);
 
 // Funzioni di disegno (il padre le userà per disegnare)
 void drawFrogPos(const FrogData* f);
