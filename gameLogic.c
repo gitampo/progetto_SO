@@ -40,3 +40,47 @@ void drawGrenadePos(const GrenadeData* g) {
 void drawBulletPos(const BulletData* b){
     mvaddch(b->y, b->x, SYMBOL_BULLET);
 }
+
+int checkFrogInTana(const Tana* tana, const FrogData* frog) {
+    // Coordinate bounding box della tana
+    int tanaLeft   = tana->rect.startX;
+    int tanaRight  = tana->rect.startX + tana->rect.width;
+    int tanaTop    = tana->rect.startY;
+    int tanaBottom = tana->rect.startY + tana->rect.height;
+
+    // Coordinate bounding box della rana
+    int frogLeft   = frog->x;
+    int frogRight  = frog->x + frog->width;
+    int frogTop    = frog->y;
+    int frogBottom = frog->y + frog->height;
+
+    // Verifica se la rana è completamente dentro la tana
+    // Puoi cambiare logica se vuoi solo un punto della rana all'interno.
+    if (frogLeft >= tanaLeft && frogRight <= tanaRight &&
+        frogTop >= tanaTop   && frogBottom <= tanaBottom) {
+        return 1; // La rana è dentro la tana
+    }
+    return 0; // Non è nella tana
+}
+
+int checkFrogInTana(const Tana* tana, const FrogData* frog) {
+    // Coordinate bounding box della tana
+    int tanaLeft   = tana->rect.startX;
+    int tanaRight  = tana->rect.startX + tana->rect.width;
+    int tanaTop    = tana->rect.startY;
+    int tanaBottom = tana->rect.startY + tana->rect.height;
+
+    // Coordinate bounding box della rana
+    int frogLeft   = frog->x;
+    int frogRight  = frog->x + frog->width;
+    int frogTop    = frog->y;
+    int frogBottom = frog->y + frog->height;
+
+    // Verifica se la rana è completamente dentro la tana
+    // Puoi cambiare logica se vuoi solo un punto della rana all'interno.
+    if (frogLeft >= tanaLeft && frogRight <= tanaRight &&
+        frogTop >= tanaTop   && frogBottom <= tanaBottom) {
+        return 1; // La rana è dentro la tana
+    }
+    return 0; // Non è nella tana
+}

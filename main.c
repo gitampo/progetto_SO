@@ -40,8 +40,8 @@ int main(void)
     // 4) Prepara la RANA 
     static FrogData frog; 
     frog.id     = 1;
-    frog.x = area.larghezzaSchermo / 2 + area.marciapiedeBasso.startX;
-    frog.y = area.marciapiedeBasso.startY - 3;
+    frog.x = area.marciapiedeBasso.startX + area.larghezzaSchermo / 2;
+    frog.y = area.marciapiedeBasso.startY + 1;
     frog.width  = 5;
     frog.height = 3;
     frog.lives  = 3;
@@ -93,7 +93,6 @@ int main(void)
     }
 
     // 9) Processo padre chiude la scrittura
-    close(pipefd[1]);
 
     // Copie locali delle strutture 
     FrogData frogPos = frog;   
@@ -148,7 +147,7 @@ int main(void)
                            crocPos.x, crocPos.y, crocPos.width, crocPos.height)) {
             decrementLife(&sb);
             frogPos.x = maxX/2;
-            frogPos.y = area.marciapiedeBasso.startY - 3;
+            frogPos.y = area.marciapiedeBasso.startY + 1;
 
             if (sb.vite <= 0) {
                 mvprintw(maxY/2, (maxX/2)-5, "GAME OVER");
@@ -165,31 +164,8 @@ int main(void)
             grenadePos.active = 0;  // La granata sparisce
         }
 
-        // Controllo se la rana entra in una tana
-     int idxTana = checkTane(&area, frogPos.x, frogPos.y, 
-    frogPos.width, frogPos.height);
-
-    if(idxTana >= 0){
-        addScore(&sb, 100);
-        chiudiTana(&area.tane[idxTana]);
-    
-        // Nuova posizione della rana nel marciapiede inferiore
-        frogPos.x = area.marciapiedeBasso.startX + area.larghezzaSchermo / 2;
-        frogPos.y = area.marciapiedeBasso.startY + 1;
-    
-        // Imposta ID speciale per segnalare aggiornamento della posizione
-        frogPos.id = -1;
-    
-        // **Invia immediatamente la nuova posizione al processo rana**
-        write(pipefd[1], &frogPos, sizeof(FrogData));
-    
-        // **Aspetta un momento per sincronizzare i processi**
-        usleep(100000);
-    }
     
     
-    
-        
         // 7) refresh finale
         refresh();
         usleep(30000);

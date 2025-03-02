@@ -4,6 +4,8 @@
 #include <unistd.h>    // write(), usleep()
 #include <signal.h>    // SIGKILL se serve
 #include <stdlib.h>    // fork(), exit()
+#include "graphics.h"  // checkTane()
+#include "gameLogic.h" //addScore()
 
 void handle_sigchld(int sig) {
     while (waitpid(-1, NULL, WNOHANG) > 0);
@@ -23,16 +25,28 @@ void frogProcess(FrogData* frog, int pipefd[2]) {
 
     // **Ciclo principale**
     while (1) {
-        // **Controlla se ci sono aggiornamenti nella pipe (senza bloccare)**
-        FrogData tempFrog;
-        int n = read(pipefd[1], &tempFrog, sizeof(FrogData));
-
-        if (n > 0 && tempFrog.id == -1) {  // ID speciale per aggiornamento posizione
-            *frog = tempFrog;  // **Aggiorna la posizione della rana**
-
-           
+       
+                        // Controllo se la rana entra in una tana
+     int idxTana = checkTane(&area, frog->x, frog->y, 
+        frog->width, frog->height);
+    
+        if(idxTana >= 0){
+            addScore(&sb, 100);
+            chiudiTana(&area.tane[idxTana]);
+        
+            // Nuova posizione della rana nel marciapiede inferiore
+            frog->x = area.marciapiedeBasso.startX + area.larghezzaSchermo / 2;
+            frog->y = area.marciapiedeBasso.startY + 1;
+        
+            // Imposta ID speciale per segnalare aggiornamento della posizione
+            frog->id = -1;
+        
+            printf("[DEBUG] Invio posizione con id=%d, x=%d, y=%d\n", frog->id, frog->x, frog->y);
+            fflush(stdout);
+         
         }
 
+      
         // **Ora legge il tasto normalmente**
         int ch = getch();
         switch (ch) {
@@ -40,40 +54,13 @@ void frogProcess(FrogData* frog, int pipefd[2]) {
             case KEY_DOWN:  frog->y += frog->height; break;
             case KEY_LEFT:  frog->x -= frog->width; break;
             case KEY_RIGHT: frog->x += frog->width; break;
-            case ' ':
-                if (fork() == 0) {
-                    setsid();
-                    GrenadeData g;
-                    g.id = 3;
-                    g.active = 1;
-                    g.x = frog->x - 1;
-                    g.y = frog->y;
-                    g.width = 1;
-                    g.height = 1;
-                    g.dir = -1;
-                    grenade(&g, pipefd[1]);
-                    _exit(0);
-                }
-                if (fork() == 0) {
-                    setsid();
-                    GrenadeData g;
-                    g.id = 3;
-                    g.active = 1;
-                    g.x = frog->x + frog->width;
-                    g.y = frog->y;
-                    g.width = 1;
-                    g.height = 1;
-                    g.dir = 1;
-                    grenade(&g, pipefd[1]);
-                    _exit(0);
-                }
+           
                 break;
             default:
                 break;
         }
 
         
-
         // **Scrivi la struct aggiornata nella pipe principale**
         write(pipefd[1], frog, sizeof(*frog));
         usleep(50000);

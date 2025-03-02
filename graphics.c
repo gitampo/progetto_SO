@@ -77,7 +77,7 @@ void disegnaAreaGioco(const AreaGioco* area) {
         if (area->tane[i].open)
             riempiRettangolo(&area->tane[i].rect, 'O');  // Tana aperta
         else
-            riempiRettangolo(&area->tane[i].rect, '#');  // Tana chiusa
+            riempiRettangolo(&area->tane[i].rect, ' ');  // Tana chiusa
     }
 
     refresh();
