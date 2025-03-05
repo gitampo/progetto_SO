@@ -1,27 +1,27 @@
-progetto.out: main.o frog.o croc.o grenade.o gamelogic.o graphics.o scoreboard.o
-	gcc main.o frog.o croc.o grenade.o gamelogic.o graphics.o scoreboard.o -lncurses -o progetto.out
+CC = gcc
+CFLAGS = -Wall -Wextra
+OBJS = main.o frog.o croc.o gameLogic.o graphics.o scoreboard.o
 
-main.o: main.c
-	gcc -c main.c
+frogger: $(OBJS)
+	$(CC) $(OBJS) -o frogger -lncurses
+
+main.o: main.c config.h graphics.h gameLogic.h frog.h croc.h scoreboard.h
+	$(CC) -c main.c $(CFLAGS)
 
 frog.o: frog.c frog.h
-	gcc -c frog.c
+	$(CC) -c frog.c $(CFLAGS)
 
 croc.o: croc.c croc.h
-	gcc -c croc.c
+	$(CC) -c croc.c $(CFLAGS)
 
-grenade.o: grenade.c grenade.h
-	gcc -c grenade.c
-
-gamelogic.o: gamelogic.c gamelogic.h
-	gcc -c gamelogic.c
+gameLogic.o: gameLogic.c gameLogic.h
+	$(CC) -c gameLogic.c $(CFLAGS)
 
 graphics.o: graphics.c graphics.h
-	gcc -c graphics.c
+	$(CC) -c graphics.c $(CFLAGS)
 
 scoreboard.o: scoreboard.c scoreboard.h
-	gcc -c scoreboard.c
+	$(CC) -c scoreboard.c $(CFLAGS)
 
 clean:
-	rm -f *.o
-	rm -f *.out
+	rm -f *.o frogger

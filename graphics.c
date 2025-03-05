@@ -7,88 +7,100 @@
 #define CHAR_TANA_CHIUSA ' '
 
 static void riempiRettangolo(const Rettangolo* r, char ch){
-    for(int row=0; row<r->height; row++){
+    for(int row = 0; row < r->height; row++){
         move(r->startY + row, r->startX);
-        for(int col=0; col<r->width; col++){
+        for(int col = 0; col < r->width; col++){
             addch(ch);
         }
     }
 }
 
+/**
+ * initAreaGioco:
+ *  - Riduce la larghezza/altezza di default,
+ *    per evitare che si disegni fuori schermo su terminal piccoli.
+ */
 void initAreaGioco(AreaGioco* area, int maxX, int maxY) {
-    int gameWidth = maxX / 2;   // Riduce la larghezza della schermata di gioco
-    int gameHeight = maxY - 2;  // Aumenta l'altezza lasciando spazio per la scoreboard
+    // Forziamo dimensioni massime ridotte, così la rana si vede
+    int gameWidth  = (maxX >= 60) ? 50 : maxX - 2;   
+    int gameHeight = (maxY >= 24) ? 18 : maxY - 5;
 
-    int startX = (maxX - gameWidth) / 2;  // Centro orizzontalmente
-    int startY = 1;  // Inizia dall'alto lasciando spazio per la scoreboard
+    // Evita che vadano sotto zero
+    if (gameWidth < 10)  gameWidth = 10;
+    if (gameHeight < 10) gameHeight = 10;
+
+    int startX = (maxX - gameWidth) / 2;  // centra orizzontalmente
+    int startY = 1;  // Riga 1, scoreboard su riga 0
 
     area->larghezzaSchermo = gameWidth;
-    area->altezzaSchermo = gameHeight;
+    area->altezzaSchermo   = gameHeight;
 
-    // Marciapiede inferiore (ora più alto per contenere la rana)
-    area->marciapiedeBasso.height = 4;  // Prima era 2, ora è 4 per sicurezza
-    area->marciapiedeBasso.width = gameWidth;
+    // Marciapiede inferiore
+    area->marciapiedeBasso.height = 4;
+    area->marciapiedeBasso.width  = gameWidth;
     area->marciapiedeBasso.startX = startX;
-    area->marciapiedeBasso.startY = startY + gameHeight - area->marciapiedeBasso.height;
+    area->marciapiedeBasso.startY =
+        startY + gameHeight - area->marciapiedeBasso.height;
 
-    // Fiume con più spazio verticale
-    int flussoH = 3;  // Altezza maggiore per il fiume
+    // Fiume
+    int flussoH = 3;
     for (int i = 0; i < NUM_FLUSSI; i++) {
-        area->fiume[i].width = gameWidth;
+        area->fiume[i].width  = gameWidth;
         area->fiume[i].height = flussoH;
         area->fiume[i].startX = startX;
-        area->fiume[i].startY = area->marciapiedeBasso.startY - (i + 1) * flussoH;
+        area->fiume[i].startY =
+            area->marciapiedeBasso.startY - (i + 1) * flussoH;
     }
 
-    // Marciapiede superiore (ora più alto)
-    area->marciapiedeAlto.height = 4;  // Prima era 2, ora è 4 per sicurezza
-    area->marciapiedeAlto.width = gameWidth;
+    // Marciapiede superiore
+    area->marciapiedeAlto.height = 4;
+    area->marciapiedeAlto.width  = gameWidth;
     area->marciapiedeAlto.startX = startX;
-    area->marciapiedeAlto.startY = area->fiume[NUM_FLUSSI - 1].startY - area->marciapiedeAlto.height;
+    area->marciapiedeAlto.startY =
+        area->fiume[NUM_FLUSSI - 1].startY - area->marciapiedeAlto.height;
 
-    // Tane centrate
+    // Tane
     int tanaW = gameWidth / (NUM_TANE * 2);
     int tanaH = 3;
+    if (tanaW < 2) tanaW = 2;
     for (int i = 0; i < NUM_TANE; i++) {
-        area->tane[i].rect.width = tanaW;
+        area->tane[i].rect.width  = tanaW;
         area->tane[i].rect.height = tanaH;
-        area->tane[i].rect.startX = startX + i * (gameWidth / NUM_TANE) + ((gameWidth / NUM_TANE - tanaW) / 2);
+        area->tane[i].rect.startX =
+            startX + i * (gameWidth / NUM_TANE) + 
+            ((gameWidth / NUM_TANE - tanaW) / 2);
         area->tane[i].rect.startY = area->marciapiedeAlto.startY - tanaH;
-        area->tane[i].open = 1;
+        area->tane[i].open       = 1;
     }
 }
 
-
-
 void disegnaAreaGioco(const AreaGioco* area) {
-    // Disegna marciapiede inferiore
-    riempiRettangolo(&area->marciapiedeBasso, '=');
+    // Marciapiede inferiore
+    riempiRettangolo(&area->marciapiedeBasso, CHAR_MARCIAPIEDE);
 
-    // Disegna fiume
+    // Fiume
     for (int i = 0; i < NUM_FLUSSI; i++) {
-        riempiRettangolo(&area->fiume[i], '~');
+        riempiRettangolo(&area->fiume[i], CHAR_FIUME);
     }
 
-    // Disegna marciapiede superiore
-    riempiRettangolo(&area->marciapiedeAlto, '@');
+    // Marciapiede superiore
+    riempiRettangolo(&area->marciapiedeAlto, CHAR_ERBA);
 
-    // Disegna tane
+    // Tane
     for (int i = 0; i < NUM_TANE; i++) {
         if (area->tane[i].open)
-            riempiRettangolo(&area->tane[i].rect, 'O');  // Tana aperta
+            riempiRettangolo(&area->tane[i].rect, CHAR_TANA_APERTA);
         else
-            riempiRettangolo(&area->tane[i].rect, '#');  // Tana chiusa
+            riempiRettangolo(&area->tane[i].rect, CHAR_TANA_CHIUSA);
     }
-
     refresh();
 }
 
-
 void chiudiTana(Tana* t){
-    t->open=0;
-    for(int r=0; r<t->rect.height; r++){
+    t->open = 0;
+    for(int r=0; r < t->rect.height; r++){
         move(t->rect.startY + r, t->rect.startX);
-        for(int c=0; c<t->rect.width; c++){
+        for(int c=0; c < t->rect.width; c++){
             addch(CHAR_TANA_CHIUSA);
         }
     }
@@ -96,7 +108,7 @@ void chiudiTana(Tana* t){
 }
 
 int checkTane(AreaGioco* area, int frogX, int frogY, int frogW, int frogH){
-    for(int i=0; i<NUM_TANE; i++){
+    for(int i = 0; i < NUM_TANE; i++){
         if(area->tane[i].open){
             int tx1 = area->tane[i].rect.startX;
             int ty1 = area->tane[i].rect.startY;
@@ -108,8 +120,8 @@ int checkTane(AreaGioco* area, int frogX, int frogY, int frogW, int frogH){
             int fx2 = fx1 + frogW;
             int fy2 = fy1 + frogH;
 
-            if(fx2>tx1 && fx1<tx2 && fy2>ty1 && fy1<ty2){
-                return i; // indice tana
+            if(fx2 > tx1 && fx1 < tx2 && fy2 > ty1 && fy1 < ty2){
+                return i; // indice della tana in cui è entrata la rana
             }
         }
     }

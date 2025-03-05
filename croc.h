@@ -2,8 +2,8 @@
 #define CROC_H
 
 /*
- * Struttura del Coccodrillo
- *  - id = 2..N
+ * Struttura del Coccodrillo:
+ *   id = 2..N
  */
 typedef struct {
     int id;
