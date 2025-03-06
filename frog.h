@@ -9,6 +9,6 @@
 #ifndef FROG_H
 #define FROG_H
 
-void frog(Coordinates frog, int pipe[2]);
+void frog(Coordinates *frog, int fileds[2]);
 
 #endif
