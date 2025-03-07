@@ -19,11 +19,13 @@ int main (){
     box(stdscr, ACS_VLINE, ACS_HLINE);
 
     Coordinates frog1 = {1, LINES - 2, COLS - 2}; // Modificato da puntatore a variabile
-    Coordinates croc1 = {2, 1, 1}; // Modificato da puntatore a variabile
+    Coordinates croc1[NUM_CROCS] = {{2, 1, 1}, {2, 2, 2}, {2, 3, 3}, {2, 4, 4}, {2, 5, 5}}; // Array di coccodrilli
     Coordinates temp;
 
     mvaddch(frog1.y, frog1.x, SPRITE_FROG);
-    mvaddch(croc1.y, croc1.x, SPRITE_CROC);
+    for (int i = 0; i < NUM_CROCS; i++) {
+        mvaddch(croc1[i].y, croc1[i].x, SPRITE_CROC);
+    }
     refresh();
 
     int fileds[2];
@@ -34,17 +36,30 @@ int main (){
     }
 
     pid_t pid_frog = fork();
-    if (pid_frog == 0) {
+    if (pid_frog == -1) {
+        perror("Errore fork frog");
+        endwin();
+        exit(-1);
+    } else if (pid_frog == 0) {
         close(fileds[0]);
-        frog(&frog1, fileds); // Passa la variabile direttamente
+        frog(&frog1, fileds);
         exit(0);
     }
+    pid_t pid_crocs[NUM_CROCS]; // Array per memorizzare i PID dei coccodrilli
 
-    pid_t pid_croc = fork();
-    if (pid_croc == 0) {
-        close(fileds[0]);
-        croc(&croc1, fileds); // Passa la variabile direttamente
-        exit(0);
+    for (int i = 0; i < NUM_CROCS; i++) {
+        pid_t pid_croc = fork();
+        if (pid_croc == -1) {
+            perror("Errore fork croc");
+            endwin();
+            exit(-1);
+        } else if (pid_croc == 0) {
+            close(fileds[0]);
+            croc(&croc1[i], fileds);
+            exit(0);
+        } else {
+            pid_crocs[i] = pid_croc; // Memorizza il PID del processo coccodrillo
+        }
     }
 
     close(fileds[1]);
@@ -59,21 +74,28 @@ int main (){
                 frog1.x = temp.x;
                 mvaddch(frog1.y, frog1.x, SPRITE_FROG);
             } else if (temp.id == 2) { // Aggiorna la posizione del COCCODRILLO
-                mvaddch(croc1.y, croc1.x, ' ');
-                croc1.y = temp.y;
-                croc1.x = temp.x;
-                mvaddch(croc1.y, croc1.x, SPRITE_CROC);
+                for (int i = 0; i < NUM_CROCS; i++) {
+                    if (croc1[i].id == temp.id) {
+                    mvaddch(croc1[i].y, croc1[i].x, ' ');
+                    croc1[i].y = temp.y;
+                    croc1[i].x = temp.x;
+                    mvaddch(croc1[i].y, croc1[i].x, SPRITE_CROC);   
+                    } 
+                }
             }
-
             refresh();
-            usleep(50000); // Ritardo per evitare un loop troppo veloce
+            usleep(50000);
+        } else {
+            perror("Errore read");
         }
+} 
 
-}  
-
+refresh();
 endwin();
 kill(pid_frog, SIGKILL);
-kill(pid_croc, SIGKILL);
+for (int i = 0; i < NUM_CROCS; i++) {
+    kill(pid_crocs[i], SIGKILL); // Termina i processi dei coccodrilli
+}
 wait(NULL);
 return 0;
 }
