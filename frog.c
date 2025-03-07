@@ -7,10 +7,6 @@
 #include "graphics.h"
 #include "frog.h"
 
-/*#define SYMBOL-FROG_1 " @..@"
-#define SYMBOL_FROG_2 "(----)"
-#define SYMBOL-FROG_3 " ^^^^"*/
-
 void frog(Coordinates *frog, int fileds[2]) {
     while (1) {
         switch (getch()) {
@@ -27,10 +23,7 @@ void frog(Coordinates *frog, int fileds[2]) {
                 if (frog->x < COLS - 2) frog->x += 1;
                 break;
         }
-
         write(fileds[1], frog, sizeof(Coordinates));
-        usleep(10000); // Ritardo per evitare un uso intensivo della CPU
-        halfdelay(1); // Ogni chiamata a getch() aspetta fino a 100 ms
     }
 }
 

@@ -5,11 +5,11 @@
 #include <signal.h>
 #include <ncurses.h>
 #include "graphics.h"
-#include "frog.h"
 
 #ifndef CROC_H
 #define CROC_H
+#define SPRITE_CROC "C"
 
-void croc(Coordinates *croc[], int fileds[2]);
+void croc(Coordinates *croc, int fileds[2]);
 
 #endif // CROC_H

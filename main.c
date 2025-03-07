@@ -6,9 +6,7 @@
 #include <ncurses.h>
 #include "graphics.h"
 #include "frog.h"
-
-#define SPRITE_FROG "AAA"
-#define SPRITE_CROC "CCC"
+#include "croc.h"
 
 int main (){
     initscr();
@@ -19,7 +17,7 @@ int main (){
     box(stdscr, ACS_VLINE, ACS_HLINE);
 
     Coordinates frog1 = {1, LINES - 2, COLS - 2}; // Modificato da puntatore a variabile
-    Coordinates croc1[NUM_CROCS] = {{2, 1, 1}, {2, 2, 2}, {2, 3, 3}, {2, 4, 4}, {2, 5, 5}}; // Array di coccodrilli
+    Coordinates croc1[NUM_CROCS] = {{2, 7, 2}, {3, 2, 4}, {4, 6, 6}, {5, 7, 8}, {6, 8, 7}}; // Array di coccodrilli
     Coordinates temp;
 
     mvaddch(frog1.y, frog1.x, SPRITE_FROG);
@@ -67,13 +65,13 @@ int main (){
     while (1) {
 
         // Legge le coordinate aggiornate
-        if (read(fileds[0], &temp, sizeof(Coordinates)) > 0) {
+        while (read(fileds[0], &temp, sizeof(Coordinates)) > 0) {
             if (temp.id == 1) { // Aggiorna la posizione della RANA
                 mvaddch(frog1.y, frog1.x, ' ');
                 frog1.y = temp.y;
                 frog1.x = temp.x;
                 mvaddch(frog1.y, frog1.x, SPRITE_FROG);
-            } else if (temp.id == 2) { // Aggiorna la posizione del COCCODRILLO
+            } else if (temp.id == 2 || temp.id == 3 || temp.id == 4 || temp.id == 5 || temp.id == 6) { // Aggiorna la posizione del COCCODRILLO
                 for (int i = 0; i < NUM_CROCS; i++) {
                     if (croc1[i].id == temp.id) {
                     mvaddch(croc1[i].y, croc1[i].x, ' ');
@@ -82,20 +80,18 @@ int main (){
                     mvaddch(croc1[i].y, croc1[i].x, SPRITE_CROC);   
                     } 
                 }
-            }
+            }    
             refresh();
-            usleep(50000);
-        } else {
-            perror("Errore read");
+            usleep(100000);
         }
 } 
 
-refresh();
 endwin();
 kill(pid_frog, SIGKILL);
 for (int i = 0; i < NUM_CROCS; i++) {
     kill(pid_crocs[i], SIGKILL); // Termina i processi dei coccodrilli
 }
+wait(NULL);
 wait(NULL);
 return 0;
 }
