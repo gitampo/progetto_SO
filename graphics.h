@@ -1,22 +1,27 @@
 #ifndef GRAPHICS_H
 #define GRAPHICS_H
 
-// Sprite per disegnare la rana e i coccodrilli
-#define SPRITE_FROG '@'
 #define SPRITE_CROC 'C'
+#define PAVEMENT_HEIGHT 3
+#define PAVEMENT_WIDTH  20
 
-// Struttura base con ID e coordinate
+// Altezza fiume
+#define RIVER_HEIGHT 24
+
 typedef struct {
     int id;
     int y;
     int x;
 } Coordinates;
 
-// Struttura che rappresenta un coccodrillo
 typedef struct {
     int id;
     Coordinates coords;
-    int direction; // +1 per muoversi a destra, -1 per muoversi a sinistra
+    int direction;
 } Crocodile;
+
+// Funzioni di disegno
+void drawPavementCentered();
+void drawRiver();
 
 #endif // GRAPHICS_H

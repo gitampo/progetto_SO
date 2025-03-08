@@ -17,10 +17,14 @@ int main() {
     keypad(stdscr, TRUE);
     curs_set(0);
 
-    // Rendiamo getch() non-bloccante (così il programma continua anche senza input)
+    start_color();
+    init_pair(1, COLOR_GREEN, COLOR_BLACK);
+    
+
+    // getch() non-bloccante
     nodelay(stdscr, TRUE);
 
-    // Creiamo la pipe (fileds[0] per leggere, fileds[1] per scrivere)
+    // Creiamo la pipe (fileds[0] = read, fileds[1] = write)
     int fileds[2];
     if (pipe(fileds) == -1) {
         perror("Errore creazione pipe");
@@ -28,89 +32,97 @@ int main() {
         exit(1);
     }
 
-    // Impostiamo la lettura dal pipe in modo non-bloccante
-    // (così il padre non si blocca in read() se il figlio non ha ancora scritto)
+    // Imposto la read in modo non-bloccante
     int flags = fcntl(fileds[0], F_GETFL, 0);
     fcntl(fileds[0], F_SETFL, flags | O_NONBLOCK);
 
-    // Inizializza la rana
-    Coordinates frog1;
-    frog1.id = 1;
-    frog1.y = LINES - 2;
-    frog1.x = COLS / 2;
+    // Inizializza la rana multi-riga
+    FrogPos frog;
+    frog.y = LINES - FROG_HEIGHT; 
+    frog.x = (COLS - FROG_WIDTH) / 2;
 
-    // Inizializza un array di coccodrilli
+    // Inizializza i coccodrilli
     Crocodile croc1[NUM_CROCS];
     for (int i = 0; i < NUM_CROCS; i++) {
-        croc1[i].id = i + 2;  // ID univoco
-        croc1[i].coords.y = 5 + i;        // sparsi verticalmente
-        croc1[i].coords.x = 5 + (i * 5);  // e orizzontalmente
-        // alterniamo la direzione
+        croc1[i].id = i + 2;
+        croc1[i].coords.y = 5 + i;
+        croc1[i].coords.x = 5 + (i * 5);
         croc1[i].direction = (i % 2 == 0) ? 1 : -1;
     }
 
-    // Creiamo un processo figlio per gestire tutti i coccodrilli
+    // fork per i coccodrilli
     pid_t pid_croc = fork();
     if (pid_croc == -1) {
         perror("Errore fork croc");
         endwin();
         exit(1);
     } else if (pid_croc == 0) {
-        // Figlio: chiude il lato di lettura
         close(fileds[0]);
-        // Avvia la gestione dei coccodrilli
         runCrocs(croc1, NUM_CROCS, fileds[1]);
-        // In teoria non usciamo mai, ma se volessi chiudere:
         exit(0);
     }
 
-    // Padre: chiude il lato di scrittura
+    // Padre: chiudo lato di scrittura
     close(fileds[1]);
 
-    // Ciclo principale del gioco
-    while (1) {
-        // 1) Leggiamo input utente per la rana
-        int ch = getch(); // se non c'è input, restituisce ERR
-        if (ch != ERR) {
-            moveFrog(&frog1, ch);
-        }
+    // Disegno iniziale della rana
+    drawFrog(&frog);
+    refresh();
 
-        // 2) Leggiamo le nuove posizioni dei coccodrilli dal figlio (non bloccante)
-        ssize_t bytesRead = read(fileds[0], croc1, sizeof(croc1));
-        // Se bytesRead == -1 e errno == EAGAIN o EWOULDBLOCK => nessun dato pronto
-        // Se bytesRead == sizeof(croc1), allora abbiamo un array completo
-        // Altrimenti potrebbe esserci un errore o fine del figlio
-        // Per semplicità, ignoriamo i casi parziali e proseguiamo
-        // (ma in un progetto più robusto gestiremmo i vari possibili casi).
-        
-        // 3) Controllo collisioni (frog1 vs coccodrilli)
-        for (int i = 0; i < NUM_CROCS; i++) {
-            if (frog1.y == croc1[i].coords.y && frog1.x == croc1[i].coords.x) {
-                // Scontro: rimettiamo la rana in basso
-                frog1.y = LINES - 2;
-                frog1.x = COLS / 2;
+    // Ciclo principale
+    while (1) {
+        // 1) Lettura input per la rana
+        int ch = getch();
+        if (ch != ERR) {
+            // 1a) Cancella la vecchia posizione
+            clearFrog(&frog);
+            // 1b) Aggiorna coordinate
+            moveFrog(&frog, ch);
+
+            // Se vuoi limitare il movimento orizzontale al marciapiede centrato:
+            int startCol = (COLS - PAVEMENT_WIDTH) / 2;  // colonna di inizio
+            int endCol   = startCol + PAVEMENT_WIDTH;    // colonna di fine (esclusa)
+            if (frog.x < startCol) {
+                frog.x = startCol;
+            }
+            int maxX = endCol - FROG_WIDTH;
+            if (frog.x > maxX) {
+                frog.x = maxX;
             }
         }
 
-        // 4) Puliamo lo schermo e ridisegniamo
+        // 2) Leggiamo la posizione dei coccodrilli dal figlio
+        ssize_t bytesRead = read(fileds[0], croc1, sizeof(croc1));
+        (void)bytesRead; // per evitare warning "unused variable"
+
+        // 3) Controllo collisioni
+        for (int i = 0; i < NUM_CROCS; i++) {
+            int cx = croc1[i].coords.x;
+            int cy = croc1[i].coords.y;
+            if (cx >= frog.x && cx < frog.x + FROG_WIDTH &&
+                cy >= frog.y && cy < frog.y + FROG_HEIGHT) 
+            {
+                // Scontro: resetto la rana
+                clearFrog(&frog);
+                frog.y = LINES - FROG_HEIGHT;
+                frog.x = (COLS - FROG_WIDTH) / 2;
+            }
+        }
+
+        // 4) Ridisegno schermo
         clear();
-
-        // Disegniamo la rana
-        mvaddch(frog1.y, frog1.x, SPRITE_FROG);
-
-        // Disegniamo i coccodrilli
+        drawPavement();     // marciapiede in basso (o drawPavementCentered() se lo hai definito così)
+        drawFrog(&frog);
         for (int i = 0; i < NUM_CROCS; i++) {
             mvaddch(croc1[i].coords.y, croc1[i].coords.x, SPRITE_CROC);
         }
-
-        // Aggiorna lo schermo
         refresh();
 
-        // 5) Pausa di ~70ms (14 FPS circa)
+        // 5) Pausa ~70ms
         usleep(70000);
     }
 
-    // (Se prevedi di uscire dal gioco, termina figlio e chiudi ncurses)
+    // Codice non raggiunto con while(1):
     endwin();
     kill(pid_croc, SIGKILL);
     wait(NULL);
