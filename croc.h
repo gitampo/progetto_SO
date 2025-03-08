@@ -8,8 +8,9 @@
 
 #ifndef CROC_H
 #define CROC_H
-#define SPRITE_CROC "C"
 
-void croc(Coordinates *croc, int fileds[2]);
+#define SPRITE_CROC 'C'
+
+void croc(Crocodile *croc, int fileds[2]);
 
 #endif // CROC_H

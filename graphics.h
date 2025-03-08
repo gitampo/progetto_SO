@@ -16,6 +16,11 @@ typedef struct {
     int x;
 } Coordinates;
 
+typedef struct {
+    int id;
+    Coordinates coords;
+} Crocodile;
+
 
 #endif 
 

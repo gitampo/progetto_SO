@@ -8,7 +8,9 @@
 #include "frog.h"
 #include "croc.h"
 
-int main (){
+#define NUM_CROCS 5
+
+int main() {
     initscr();
     cbreak();
     noecho();
@@ -17,12 +19,18 @@ int main (){
     box(stdscr, ACS_VLINE, ACS_HLINE);
 
     Coordinates frog1 = {1, LINES - 2, COLS - 2}; // Modificato da puntatore a variabile
-    Coordinates croc1[NUM_CROCS] = {{2, 7, 2}, {3, 2, 4}, {4, 6, 6}, {5, 7, 8}, {6, 8, 7}}; // Array di coccodrilli
+    Crocodile croc1[NUM_CROCS] = {
+        {2, {7, 2}},
+        {3, {2, 4}},
+        {4, {6, 6}},
+        {5, {7, 8}},
+        {6, {8, 7}}
+    };
     Coordinates temp;
 
     mvaddch(frog1.y, frog1.x, SPRITE_FROG);
     for (int i = 0; i < NUM_CROCS; i++) {
-        mvaddch(croc1[i].y, croc1[i].x, SPRITE_CROC);
+        mvaddch(croc1[i].coords.y, croc1[i].coords.x, SPRITE_CROC);
     }
     refresh();
 
@@ -63,35 +71,36 @@ int main (){
     close(fileds[1]);
 
     while (1) {
-
         // Legge le coordinate aggiornate
-        while (read(fileds[0], &temp, sizeof(Coordinates)) > 0) {
+        if (read(fileds[0], &temp, sizeof(Coordinates)) > 0) {
             if (temp.id == 1) { // Aggiorna la posizione della RANA
                 mvaddch(frog1.y, frog1.x, ' ');
                 frog1.y = temp.y;
                 frog1.x = temp.x;
                 mvaddch(frog1.y, frog1.x, SPRITE_FROG);
-            } else if (temp.id == 2 || temp.id == 3 || temp.id == 4 || temp.id == 5 || temp.id == 6) { // Aggiorna la posizione del COCCODRILLO
+            } else { // Aggiorna la posizione del COCCODRILLO
                 for (int i = 0; i < NUM_CROCS; i++) {
-                    if (croc1[i].id == temp.id) {
-                    mvaddch(croc1[i].y, croc1[i].x, ' ');
-                    croc1[i].y = temp.y;
-                    croc1[i].x = temp.x;
-                    mvaddch(croc1[i].y, croc1[i].x, SPRITE_CROC);   
-                    } 
+                    if (croc1[i].coords.id == temp.id) {
+                        mvaddch(croc1[i].coords.y, croc1[i].coords.x, ' ');
+                        croc1[i].coords.y = temp.y;
+                        croc1[i].coords.x = temp.x;
+                        mvaddch(croc1[i].coords.y, croc1[i].coords.x, SPRITE_CROC);
+                    }
                 }
-            }    
+            }
             refresh();
             usleep(100000);
+        } else {
+            perror("Errore read");
         }
-} 
+    }
 
-endwin();
-kill(pid_frog, SIGKILL);
-for (int i = 0; i < NUM_CROCS; i++) {
-    kill(pid_crocs[i], SIGKILL); // Termina i processi dei coccodrilli
-}
-wait(NULL);
-wait(NULL);
-return 0;
+    endwin();
+    kill(pid_frog, SIGKILL);
+    for (int i = 0; i < NUM_CROCS; i++) {
+        kill(pid_crocs[i], SIGKILL); // Termina i processi dei coccodrilli
+    }
+    wait(NULL);
+    wait(NULL);
+    return 0;
 }
