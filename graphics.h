@@ -1,27 +1,22 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/wait.h>
-#include <signal.h>
-#include <ncurses.h>
-
 #ifndef GRAPHICS_H
 #define GRAPHICS_H
 
-#define NUM_CROCS 5
+// Sprite per disegnare la rana e i coccodrilli
+#define SPRITE_FROG '@'
+#define SPRITE_CROC 'C'
 
+// Struttura base con ID e coordinate
 typedef struct {
-    int id; 
+    int id;
     int y;
     int x;
 } Coordinates;
 
+// Struttura che rappresenta un coccodrillo
 typedef struct {
     int id;
     Coordinates coords;
+    int direction; // +1 per muoversi a destra, -1 per muoversi a sinistra
 } Crocodile;
 
-
-#endif 
-
-
+#endif // GRAPHICS_H

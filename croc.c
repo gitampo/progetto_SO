@@ -1,29 +1,36 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/wait.h>
-#include <signal.h>
-#include <ncurses.h>
-#include "graphics.h"
 #include "croc.h"
+#include <ncurses.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
 
-void croc(Crocodile *croc, int fileds[2]) {
+// Il processo figlio esegue un ciclo infinito:
+// - Muove tutti i coccodrilli
+// - Scrive l'array di coccodrilli sul pipe
+// - Attende un po' di tempo
+void runCrocs(Crocodile crocs[], int numCrocs, int writeFD) {
     while (1) {
-        // Muove il coccodrillo orizzontalmente
-        croc->coords.x += 1;
-        if (croc->coords.x >= COLS) {
-            croc->coords.x = 0; // Riappare dal lato opposto
-        }
-        if (croc->id == 2 && croc->id == 5) {
-            croc->coords.x -= 1;
-            if (croc->coords.x <= COLS) {
-                croc->coords.x = 10; // Riappare dal lato opposto
+        // Aggiorna posizioni
+        for (int i = 0; i < numCrocs; i++) {
+            crocs[i].coords.x += crocs[i].direction;
+            // Se esce a sinistra, ricompare a destra
+            if (crocs[i].coords.x < 1) {
+                crocs[i].coords.x = COLS - 2;
+            }
+            // Se esce a destra, ricompare a sinistra
+            else if (crocs[i].coords.x > COLS - 2) {
+                crocs[i].coords.x = 1;
             }
         }
-        // Scrive le nuove coordinate nel pipe
-        write(fileds[1], &croc->coords, sizeof(Coordinates));
-        // Attende un po' di tempo prima di muoversi di nuovo
-        usleep(500000); // 500 millisecondi
+        // Scrive tutto l'array sulla pipe
+        // (padre leggerà con read(...) la stessa quantità di byte)
+        ssize_t written = write(writeFD, crocs, sizeof(Crocodile) * numCrocs);
+        if (written == -1) {
+            perror("Errore write nel figlio");
+            exit(1);
+        }
+
+        // Attende 400ms prima di muovere di nuovo i coccodrilli
+        usleep(400000);
     }
 }
-

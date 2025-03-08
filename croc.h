@@ -1,16 +1,13 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/wait.h>
-#include <signal.h>
-#include <ncurses.h>
-#include "graphics.h"
-
 #ifndef CROC_H
 #define CROC_H
 
-#define SPRITE_CROC 'C'
+#include "graphics.h"
 
-void croc(Crocodile *croc, int fileds[2]);
+// Numero di coccodrilli (lo usiamo anche nel figlio).
+#define NUM_CROCS 5
+
+// Funzione chiamata dal processo figlio, che gestisce TUTTI i coccodrilli.
+// Legge/scrive su writeFD per comunicare le posizioni al processo padre.
+void runCrocs(Crocodile crocs[], int numCrocs, int writeFD);
 
 #endif // CROC_H
