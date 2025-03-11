@@ -1,18 +1,31 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/wait.h>
-#include <signal.h>
-#include <ncurses.h>
-#include "graphics.h"
-
 #ifndef FROG_H
 #define FROG_H
 
-#define SPRITE_FROG   "@       @"
-#define SYMBOL_FROG_2 "(----)"
-#define SYMBOL-FROG_3 " ^^^^"
+#include "graphics.h"  // Se serve usare Coordinates o altre strutture comuni
 
-void frog(Coordinates *frog, int fileds[2]);
+// Larghezza e altezza dello sprite della rana
+#define FROG_WIDTH  8
+#define FROG_HEIGHT 3
+#define FROG_JUMP_X 2
+#define FROG_JUMP_Y FROG_HEIGHT
 
-#endif
+
+// Tre righe di sprite della rana
+#define SYMBOL_FROG_1 "  @..@  "
+#define SYMBOL_FROG_2 " (----)"
+#define SYMBOL_FROG_3 "  ~~~~  "
+
+// Struttura che memorizza la posizione "top-left" della rana sullo schermo.
+typedef struct {
+    int y; // Riga di riferimento
+    int x; // Colonna di riferimento
+} FrogPos;
+
+// Funzioni di disegno
+void drawFrog(const FrogPos *frog);
+void clearFrog(const FrogPos *frog);
+
+// Funzione per muovere la rana in base al tasto premuto (freccia su/giu/sinistra/destra).
+void moveFrog(FrogPos *frog, int inputKey);
+
+#endif // FROG_H
