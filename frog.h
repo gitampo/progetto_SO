@@ -11,9 +11,9 @@
 
 
 // Tre righe di sprite della rana
-#define SYMBOL_FROG_1 "  @..@  "
-#define SYMBOL_FROG_2 " (----)"
-#define SYMBOL_FROG_3 "  ~~~~  "
+#define SYMBOL_FROG_1 " @..@ "
+#define SYMBOL_FROG_2 "(----)"
+#define SYMBOL_FROG_3 " ~~~~ "
 
 // Struttura che memorizza la posizione "top-left" della rana sullo schermo.
 typedef struct {

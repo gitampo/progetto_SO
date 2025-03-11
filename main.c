@@ -19,7 +19,8 @@ int main() {
 
     start_color();
     init_pair(1, COLOR_GREEN, COLOR_BLACK);
-    
+    init_pair(2, COLOR_BLUE, COLOR_BLUE);
+
 
     // getch() non-bloccante
     nodelay(stdscr, TRUE);
@@ -42,12 +43,16 @@ int main() {
     frog.x = (COLS - FROG_WIDTH) / 2;
 
     // Inizializza i coccodrilli
-    Crocodile croc1[NUM_CROCS];
+    int numCrocs = 2;
+    Crocodile croc1[NUM_CROCS * numCrocs];
     for (int i = 0; i < NUM_CROCS; i++) {
-        croc1[i].id = i + 2;
-        croc1[i].coords.y = 5 + i;
-        croc1[i].coords.x = 5 + (i * 5);
-        croc1[i].direction = (i % 2 == 0) ? 1 : -1;
+        for (int j = 0; j < numCrocs; j++) {
+            int index = i * numCrocs + j;
+            croc1[index].id = index;
+            croc1[index].coords.y = 1 + i;
+            croc1[index].coords.x = 1 + (i * 1) + j * 10;
+            croc1[index].direction = (i % 2 == 0) ? 1 : -1;
+        }
     }
 
     // fork per i coccodrilli
@@ -58,7 +63,7 @@ int main() {
         exit(1);
     } else if (pid_croc == 0) {
         close(fileds[0]);
-        runCrocs(croc1, NUM_CROCS, fileds[1]);
+        runCrocs(croc1, NUM_CROCS * numCrocs, fileds[1]);
         exit(0);
     }
 
@@ -85,7 +90,7 @@ int main() {
             if (frog.x < startCol) {
                 frog.x = startCol;
             }
-            int maxX = endCol - FROG_WIDTH;
+            int maxX = endCol - FROG_WIDTH + 2;
             if (frog.x > maxX) {
                 frog.x = maxX;
             }
@@ -96,24 +101,25 @@ int main() {
         (void)bytesRead; // per evitare warning "unused variable"
 
         // 3) Controllo collisioni
-        for (int i = 0; i < NUM_CROCS; i++) {
-            int cx = croc1[i].coords.x;
-            int cy = croc1[i].coords.y;
-            if (cx >= frog.x && cx < frog.x + FROG_WIDTH &&
-                cy >= frog.y && cy < frog.y + FROG_HEIGHT) 
-            {
-                // Scontro: resetto la rana
-                clearFrog(&frog);
-                frog.y = LINES - FROG_HEIGHT;
-                frog.x = (COLS - FROG_WIDTH) / 2;
-            }
-        }
+        // for (int i = 0; i < NUM_CROCS; i++) {
+        //     int cx = croc1[i].coords.x;
+        //     int cy = croc1[i].coords.y;
+        //     if (cx >= frog.x && cx < frog.x + FROG_WIDTH &&
+        //         cy >= frog.y && cy < frog.y + FROG_HEIGHT) 
+        //     {
+        //         // Scontro: resetto la rana
+        //         clearFrog(&frog);
+        //         frog.y = LINES - FROG_HEIGHT;
+        //         frog.x = (COLS - FROG_WIDTH) / 2;
+        //     }
+        // }
 
         // 4) Ridisegno schermo
         clear();
-        drawPavement();     // marciapiede in basso (o drawPavementCentered() se lo hai definito così)
+        drawRiver();     // fiume
+        drawPavement();     // marciapiede in basso 
         drawFrog(&frog);
-        for (int i = 0; i < NUM_CROCS; i++) {
+        for (int i = 0; i < NUM_CROCS * numCrocs; i++) {
             mvaddch(croc1[i].coords.y, croc1[i].coords.x, SPRITE_CROC);
         }
         refresh();
