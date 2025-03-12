@@ -5,6 +5,9 @@
 
 // Numero di coccodrilli (lo usiamo anche nel figlio).
 #define NUM_CROCS 5
+#define COCC_WIDTH  6
+#define COCC_HEIGHT 3
+
 
 // Funzione chiamata dal processo figlio, che gestisce TUTTI i coccodrilli.
 // Legge/scrive su writeFD per comunicare le posizioni al processo padre.

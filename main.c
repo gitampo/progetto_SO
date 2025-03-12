@@ -20,6 +20,11 @@ int main() {
     start_color();
     init_pair(1, COLOR_GREEN, COLOR_BLACK);
     init_pair(2, COLOR_BLUE, COLOR_BLUE);
+    if (can_change_color()) {
+        init_color(COLOR_YELLOW, 500, 250, 0);
+    }
+    init_pair(3, COLOR_RED, COLOR_YELLOW);
+    
 
 
     // getch() non-bloccante
@@ -52,6 +57,12 @@ int main() {
             croc1[index].coords.y = 1 + i;
             croc1[index].coords.x = 1 + (i * 1) + j * 10;
             croc1[index].direction = (i % 2 == 0) ? 1 : -1;
+            croc1[i].coords.y = RIVER_HEIGHT / 2;
+            croc1[i].coords.x = PAVEMENT_WIDTH / 2;
+            if (i == i + 1) {
+                croc1[i].coords.y = RIVER_HEIGHT / 2 + 1;
+                croc1[i].coords.x = PAVEMENT_WIDTH / 2 + 1;
+            }
         }
     }
 
