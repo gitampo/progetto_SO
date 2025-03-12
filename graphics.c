@@ -3,6 +3,7 @@
 
 // Disegna il marciapiede centrato in basso (ESISTENTE, se già definito)
 void drawPavement() {
+    attron(COLOR_PAIR(3)); // colore diverso per il marciapiede
     int startRow = LINES - PAVEMENT_HEIGHT;
     int startCol = (COLS - PAVEMENT_WIDTH) / 2;
     int endCol   = startCol + PAVEMENT_WIDTH;
@@ -12,6 +13,8 @@ void drawPavement() {
             mvaddch(r, c, '='); 
         }
     }
+
+    attroff(COLOR_PAIR(3));
 }
 
 // Disegna il fiume alto 24 righe, largo quanto il marciapiede, centrato orizzontalmente

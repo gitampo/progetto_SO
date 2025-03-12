@@ -20,6 +20,11 @@ int main() {
     start_color();
     init_pair(1, COLOR_GREEN, COLOR_BLACK);
     init_pair(2, COLOR_BLUE, COLOR_BLUE);
+    if (can_change_color()) {
+        init_color(COLOR_YELLOW, 500, 250, 0);
+    }
+    init_pair(3, COLOR_RED, COLOR_YELLOW);
+    
 
 
     // getch() non-bloccante
