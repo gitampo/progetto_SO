@@ -3,7 +3,7 @@
 
 #define SPRITE_CROC 'C'
 #define PAVEMENT_HEIGHT 3
-#define PAVEMENT_WIDTH  80
+#define PAVEMENT_WIDTH  84 // Larghezza del marciapiede
 
 // Altezza fiume
 #define RIVER_HEIGHT 24
@@ -21,7 +21,7 @@ typedef struct {
 } Crocodile;
 
 // Funzioni di disegno
-void drawPavementCentered();
+void drawPavement();
 void drawRiver();
 void drawPavement();
 

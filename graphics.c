@@ -2,7 +2,7 @@
 #include <ncurses.h>
 
 // Disegna il marciapiede centrato in basso (ESISTENTE, se già definito)
-void drawPavementCentered() {
+void drawPavement() {
     int startRow = LINES - PAVEMENT_HEIGHT;
     int startCol = (COLS - PAVEMENT_WIDTH) / 2;
     int endCol   = startCol + PAVEMENT_WIDTH;
@@ -14,13 +14,11 @@ void drawPavementCentered() {
     }
 }
 
-void drawPavement() {
-    // Implementazione della funzione drawPavement
-}
 
 // Disegna il fiume alto 24 righe, largo quanto il marciapiede, centrato orizzontalmente
 void drawRiver() {
-    int startRow = 0;                       // disegna il fiume a partire dalla riga 0 (top dello schermo)
+    attron(COLOR_PAIR(2)); // colore diverso per il fiume
+    int startRow = LINES - 27;                       // disegna il fiume a partire dalla riga 0 (top dello schermo)
     int endRow   = startRow + RIVER_HEIGHT; // startRow + 24
     int startCol = (COLS - PAVEMENT_WIDTH) / 2;
     int endCol   = startCol + PAVEMENT_WIDTH;
@@ -36,4 +34,5 @@ void drawRiver() {
             mvaddch(r, c, '~');
         }
     }
+    attroff(COLOR_PAIR(2));
 }
