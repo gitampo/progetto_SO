@@ -1,16 +1,13 @@
 #ifndef CROC_H
 #define CROC_H
 
-#include "graphics.h"
+#include "entity.h"
 
-// Numero di coccodrilli (lo usiamo anche nel figlio).
-#define NUM_CROCS 5
+// Dimensioni dei coccodrilli
 #define COCC_WIDTH  6
 #define COCC_HEIGHT 3
 
-
-// Funzione chiamata dal processo figlio, che gestisce TUTTI i coccodrilli.
-// Legge/scrive su writeFD per comunicare le posizioni al processo padre.
-void runCrocs(Crocodile crocs[], int numCrocs, int writeFD);
+// La funzione che gestisce i coccodrilli nel processo figlio
+void runCrocs(Entity crocs[], int numCrocs, int pipeFD);
 
 #endif // CROC_H
