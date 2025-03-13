@@ -12,13 +12,8 @@ typedef struct {
     int id;
     int y;
     int x;
-} Coordinates;
-
-typedef struct {
-    int id;
-    Coordinates coords;
     int direction;
-} Crocodile;
+} Coordinates;
 
 // Funzioni di disegno
 void drawPavement();

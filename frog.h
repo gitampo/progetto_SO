@@ -16,16 +16,12 @@
 #define SYMBOL_FROG_3 " ~~~~ "
 
 // Struttura che memorizza la posizione "top-left" della rana sullo schermo.
-typedef struct {
-    int y; // Riga di riferimento
-    int x; // Colonna di riferimento
-} FrogPos;
 
 // Funzioni di disegno
 void drawFrog(const FrogPos *frog);
 void clearFrog(const FrogPos *frog);
 
 // Funzione per muovere la rana in base al tasto premuto (freccia su/giu/sinistra/destra).
-void moveFrog(FrogPos *frog, int inputKey);
+void moveFrog(FrogPos *frog, int fileds[2]);
 
 #endif // FROG_H

@@ -43,40 +43,42 @@ int main() {
     fcntl(fileds[0], F_SETFL, flags | O_NONBLOCK);
 
     // Inizializza la rana multi-riga
-    FrogPos frog;
+    Coordinates frog;
     frog.y = LINES - FROG_HEIGHT; 
     frog.x = (COLS - FROG_WIDTH) / 2;
 
     // Inizializza i coccodrilli
-    int numCrocs = 2;
-    Crocodile croc1[NUM_CROCS * numCrocs];
-    for (int i = 0; i < NUM_CROCS; i++) {
-        for (int j = 0; j < numCrocs; j++) {
-            int index = i * numCrocs + j;
-            croc1[index].id = index;
-            croc1[index].coords.y = 1 + i;
-            croc1[index].coords.x = 1 + (i * 1) + j * 10;
-            croc1[index].direction = (i % 2 == 0) ? 1 : -1;
-            croc1[i].coords.y = RIVER_HEIGHT / 2;
-            croc1[i].coords.x = PAVEMENT_WIDTH / 2;
-            if (i == i + 1) {
-                croc1[i].coords.y = RIVER_HEIGHT / 2 + 1;
-                croc1[i].coords.x = PAVEMENT_WIDTH / 2 + 1;
-            }
-        }
-    }
+    // int numCrocs = 2;
+    // Crocodile croc1[NUM_CROCS * numCrocs];
+    // for (int i = 0; i < NUM_CROCS; i++) {
+    //     for (int j = 0; j < numCrocs; j++) {
+    //         int index = i * numCrocs + j;
+    //         croc1[index].id = index;
+    //         croc1[index].coords.y = 1 + i;
+    //         croc1[index].coords.x = 1 + (i * 1) + j * 10;
+    //         croc1[index].direction = (i % 2 == 0) ? 1 : -1;
+    //     }
+    // }
 
-    // fork per i coccodrilli
-    pid_t pid_croc = fork();
-    if (pid_croc == -1) {
-        perror("Errore fork croc");
-        endwin();
-        exit(1);
-    } else if (pid_croc == 0) {
-        close(fileds[0]);
-        runCrocs(croc1, NUM_CROCS * numCrocs, fileds[1]);
-        exit(0);
-    }
+    //pid_t pid_croc[numCrocs]; // Array per i PID dei processi figli
+
+    // for (int i = 0; i < numCrocs; i++) {
+    //     pid_croc[i] = fork();
+        
+    //     if (pid_croc[i] == -1) {
+    //         perror("Errore fork croc");
+    //         endwin();
+    //         exit(1);
+    //     } else if (pid_croc[i] == 0) {
+    //         // Codice del processo figlio
+    //         close(fileds[0]); // Chiude la lettura della pipe
+    //         runCrocs(croc1, NUM_CROCS * numCrocs, fileds[1]);
+    //         exit(0);
+    //     }
+    // }
+    
+    // Dopo il ciclo puoi gestire i processi figli (es. con waitpid())
+    
 
     // Padre: chiudo lato di scrittura
     close(fileds[1]);
@@ -85,15 +87,36 @@ int main() {
     drawFrog(&frog);
     refresh();
 
+
+    pid_t pid_frog = fork();
+    if (pid_frog == 0) {
+        close(fileds[0]);
+        moveFrog(&frog, fileds);
+        exit(0);
+    }
+    else if (pid_frog == -1) {
+        perror("Errore fork frog");
+        endwin();
+        exit(1);
+    }
     // Ciclo principale
     while (1) {
         // 1) Lettura input per la rana
         int ch = getch();
+
+        if (read(fileds[0], &temp, sizeof(Coordinates)) > 0) {
+            if (temp.id == 1) { // Aggiorna la posizione della frog
+                mvaddch(frog.y, frog.x, ' ');
+                frog.y = temp.y;
+                frog.x = temp.x;
+                mvaddch(frog.y, frog.x, SPRITE_FROG);
+            }
+        }
+            
         if (ch != ERR) {
             // 1a) Cancella la vecchia posizione
             clearFrog(&frog);
             // 1b) Aggiorna coordinate
-            moveFrog(&frog, ch);
 
             // Se vuoi limitare il movimento orizzontale al marciapiede centrato:
             int startCol = (COLS - PAVEMENT_WIDTH) / 2;  // colonna di inizio
@@ -126,22 +149,24 @@ int main() {
         // }
 
         // 4) Ridisegno schermo
-        clear();
+      
         drawRiver();     // fiume
         drawPavement();     // marciapiede in basso 
         drawFrog(&frog);
-        for (int i = 0; i < NUM_CROCS * numCrocs; i++) {
-            mvaddch(croc1[i].coords.y, croc1[i].coords.x, SPRITE_CROC);
-        }
         refresh();
+    //     for (int i = 0; i < NUM_CROCS * numCrocs; i++) {
+    //         mvaddch(croc1[i].coords.y, croc1[i].coords.x, SPRITE_CROC);
+    //     }
+    //     refresh();
 
-        // 5) Pausa ~70ms
-        usleep(70000);
-    }
+    //     // 5) Pausa ~70ms
+    //     usleep(70000);
+    // }
 
     // Codice non raggiunto con while(1):
     endwin();
-    kill(pid_croc, SIGKILL);
+    //kill(pid_croc, SIGKILL);
+    kill(pid_frog, SIGKILL);
     wait(NULL);
     return 0;
 }

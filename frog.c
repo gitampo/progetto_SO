@@ -19,8 +19,8 @@ void clearFrog(const FrogPos *frog) {
 }
 
 // Muove la rana in base al tasto premuto (freccia su/giu/sinistra/destra).
-void moveFrog(FrogPos *frog, int inputKey) {
-    switch (inputKey) {
+void moveFrog(Coordinates *frog, int fileds[2]) {
+    switch (getch()) {
         case KEY_UP:
             // Verifica di non uscire in alto
             if (frog->y >= FROG_JUMP_Y) {
@@ -60,4 +60,6 @@ void moveFrog(FrogPos *frog, int inputKey) {
             // Nessun movimento
             break;
     }
+
+    write(fileds[1], frog, sizeof(Coordinates));
 }
