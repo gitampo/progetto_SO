@@ -1,64 +1,43 @@
 #include "frog.h"
 #include <ncurses.h>
+#include <unistd.h>
 
-// Disegna la rana come 3 righe di testo
-void drawFrog(const FrogPos *frog) {
-    attron(COLOR_PAIR(1));
+void drawFrog(const Entity *frog) {
     mvprintw(frog->y,     frog->x, SYMBOL_FROG_1);
     mvprintw(frog->y + 1, frog->x, SYMBOL_FROG_2);
     mvprintw(frog->y + 2, frog->x, SYMBOL_FROG_3);
-    attroff(COLOR_PAIR(1));
 }
 
-// Cancella la rana disegnando spazi al posto dello sprite
-void clearFrog(const FrogPos *frog) {
+void clearFrog(const Entity *frog) {
     for (int i = 0; i < FROG_HEIGHT; i++) {
-        // Stampa 7 spazi (FROG_WIDTH) alla riga y+i, colonna x
-        mvprintw(frog->y + i, frog->x, "       ");
+        mvprintw(frog->y + i, frog->x, "        "); // 8 spazi
     }
 }
 
-// Muove la rana in base al tasto premuto (freccia su/giu/sinistra/destra).
-void moveFrog(Coordinates *frog, int fileds[2]) {
-    switch (getch()) {
-        case KEY_UP:
-            // Verifica di non uscire in alto
-            if (frog->y >= FROG_JUMP_Y) {
-                frog->y -= FROG_JUMP_Y;
-            } else {
-                // Se non vuoi farla uscire fuori, la blocchi a 0
-                frog->y = 0;
+void frogProcess(Entity *frog, int fileds[2]) {
+    // Imposta il tipo e l'ID per la rana
+    frog->type = OBJECT_FROG;
+    // La rana manterrà il salto pari alle sue dimensioni:
+    while (1) {
+        int ch = getch();
+        if (ch != ERR) {
+            switch(ch) {
+                case KEY_UP:
+                    if (frog->y >= FROG_HEIGHT) frog->y -= FROG_HEIGHT;
+                    break;
+                case KEY_DOWN:
+                    if (frog->y <= LINES - FROG_HEIGHT - 1) frog->y += FROG_HEIGHT;
+                    break;
+                case KEY_LEFT:
+                    if (frog->x >= FROG_WIDTH) frog->x -= FROG_WIDTH;
+                    break;
+                case KEY_RIGHT:
+                    if (frog->x <= COLS - FROG_WIDTH - 1) frog->x += FROG_WIDTH;
+                    break;
             }
-            break;
-
-        case KEY_DOWN:
-            // Verifica di non superare il limite in basso
-            if (frog->y + FROG_JUMP_Y <= LINES - FROG_HEIGHT) {
-                frog->y += FROG_JUMP_Y;
-            } else {
-                frog->y = LINES - FROG_HEIGHT;  
-            }
-            break;
-
-        case KEY_LEFT:
-            if (frog->x >= FROG_JUMP_X) {
-                frog->x -= FROG_JUMP_X;
-            } else {
-                frog->x = 0;
-            }
-            break;
-
-        case KEY_RIGHT:
-            if (frog->x + FROG_JUMP_X <= COLS - FROG_WIDTH) {
-                frog->x += FROG_JUMP_X;
-            } else {
-                frog->x = COLS - FROG_WIDTH;
-            }
-            break;
-
-        default:
-            // Nessun movimento
-            break;
+            write(fileds[1], frog, sizeof(Entity));
+        }
+        usleep(10000);
     }
 
     write(fileds[1], frog, sizeof(Coordinates));
