@@ -9,7 +9,7 @@ void drawPavement() {
     int endCol   = startCol + PAVEMENT_WIDTH; 
     for (int r = startRow; r < LINES; r++) { 
         for (int c = startCol; c < endCol; c++) { 
-            mvaddch(r, c, '='); 
+            mvprintw(r, c, "="); 
         } 
     } 
     attroff(COLOR_PAIR(3)); 
@@ -28,7 +28,7 @@ void drawRiver() {
     } 
     for (int r = startRow; r < endRow; r++) { 
         for (int c = startCol; c < endCol; c++) { 
-            mvaddch(r, c, '~'); 
+            mvprintw(r, c, "~"); 
         } 
     } 
     attroff(COLOR_PAIR(2)); 
