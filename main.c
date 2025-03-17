@@ -106,28 +106,23 @@ int main() {
     // Ciclo principale: legge dalla pipe e ridisegna la scena senza usare clear() 
     Entity temp; 
     while (1) { 
-        if (read(fileds[0], &temp, sizeof(Entity)) > 0) { 
-            if (temp.id == 1) { // Aggiorna la posizione della rana 
-                clearFrog(&frog); 
-                frog.y = temp.y; 
-                frog.x = temp.x; 
-                drawFrog(&frog); 
-            } else { // Aggiorna la posizione dei coccodrilli 
-                for (int i = 0; i < totalCrocs; i++) { 
-                    if (crocs[i].id == temp.id) { 
-                        mvprintw(crocs[i].y, crocs[i].x, "      "); // Cancella il coccodrillo precedente 
-                        crocs[i].y = temp.y;
+        if (read(fileds[0], &temp, sizeof(Entity)) > 0) {
+            if (temp.id == 1) { // Aggiorna la posizione della guardia
+                mvaddch(frog.y, frog.x, ' ');
+                frog.y = temp.y;
+                frog.x = temp.x;
+                mvaddch(frog.y, frog.x, SYMBOL_FROG_1);
+                mvaddch(frog.y, frog.x, SYMBOL_FROG_2);
+                mvaddch(frog.y, frog.x, SYMBOL_FROG_3);
+            } else if (temp.id == 2) { // Aggiorna la posizione del ladro
+                for(int i = 0; i < )
+                mvaddch(croc.y, croc.x, ' ');
+                croc.y = temp.y;
+                croc.x = temp.x;
+                mvaddch(croc.y, croc.x, SPRITE_CROC);
+            }
+        }
 
-                        crocs[i].x = temp.x; 
-                        for (int row = 0; row < COCC_HEIGHT; row++) { 
-                            for (int col = 0; col < COCC_WIDTH; col++) { 
-                                mvaddch(crocs[i].y + row, crocs[i].x + col, SPRITE_CROC); 
-                            } 
-                        } 
-                    } 
-                } 
-            } 
-        } 
  
         // Invece di chiamare clear(), ridisegniamo le aree statiche che "cancellano" le vecchie scritture: 
         // Ridisegna il fiume e il marciapiede: questi sovrascrivono l'area 

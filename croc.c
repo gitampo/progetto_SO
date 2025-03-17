@@ -25,7 +25,7 @@ void runCrocs(Entity crocs[], int numCrocs, int pipeFD) {
                 crocs[i].x = startCol + (i % 2) * 10;  
             } 
         } 
-        ssize_t written = write(pipeFD, crocs, sizeof(Entity) * numCrocs); 
+        ssize_t written = write(fileds[1], crocs, sizeof(Entity) * numCrocs); 
         if (written == -1) { 
             perror("Errore write nel figlio (coccodrilli)"); 
             exit(1); 

@@ -8,6 +8,6 @@
 #define COCC_HEIGHT 3 
  
 // La funzione che gestisce i coccodrilli nel processo figlio 
-void runCrocs(Entity crocs[], int numCrocs, int pipeFD); 
+void runCrocs(Entity crocs[], int numCrocs, int fileds[2]); 
  
 #endif // CROC_H
