@@ -21,7 +21,7 @@ int main() {
     init_pair(1, COLOR_GREEN, COLOR_BLACK);
     init_pair(2, COLOR_BLUE, COLOR_BLUE);
     init_pair(3, COLOR_RED, COLOR_YELLOW);
-    init_pair(4, COLOR_WHITE, COLOR_BLACK);
+    init_pair(4, COLOR_RED, COLOR_BLACK);
     if (can_change_color()) {
         init_color(COLOR_YELLOW, 500, 250, 0);
     }
@@ -45,32 +45,14 @@ int main() {
     frog.x = (COLS - FROG_WIDTH) / 2;
     
     // Calcola i limiti e inizializza l'area del fiume
-int lanes = RIVER_HEIGHT / COCC_HEIGHT;  // 8 corsie
-int crocsPerLane = 2;
-int totalCrocs = lanes * crocsPerLane; // 16 coccodrilli totali
+int totalCrocs = LANES * CROCS_PER_LANE; // 16 Coccodrilli totali
 Entity crocs[totalCrocs];
 int index = 0;
 int startCol = (COLS - PAVEMENT_WIDTH) / 2;
 int endCol = startCol + PAVEMENT_WIDTH;
 int riverStartRow = LINES - 27;  // Calcola il punto di partenza del fiume (come in drawRiver)
 
-for (int i = 0; i < lanes; i++) {
-    int dir = (i % 2 == 0) ? 1 : -1;  // corsia pari: da sinistra a destra; dispari: da destra a sinistra
-    for (int j = 0; j < crocsPerLane; j++) {
-        crocs[index].id = index; // Rana ha id 1, coccodrilli da 2
-        crocs[index].type = OBJECT_CROCODILE;
-        crocs[index].y = riverStartRow + i * COCC_HEIGHT;
-        crocs[index].direction = dir;
-        if (dir == 1)
-            crocs[index].x = startCol + j * 10;
-        else
-            crocs[index].x = endCol - COCC_WIDTH - j * 10;
-        crocs[index].initX = crocs[index].x;
-        crocs[index].inGioco = 1; // Imposta inGioco a 1
-        index++;
-    }
-}
-
+creaCrocodiles(crocs, startCol, endCol, riverStartRow);
     
     // Fork per la rana
     pid_t pid_frog = fork();
@@ -84,12 +66,12 @@ for (int i = 0; i < lanes; i++) {
         exit(EXIT_SUCCESS);
     }
     
-// Fork per ogni coccodrillo (ogni processo figlio gestisce un singolo coccodrillo)
+// Fork per ogni CROCodrillo (ogni processo figlio gestisce un singolo CROCodrillo)
 pid_t pid_crocs[totalCrocs];
 for (int i = 0; i < totalCrocs; i++) {
     pid_crocs[i] = fork();
     if (pid_crocs[i] == -1) {
-        perror("Errore fork coccodrillo");
+        perror("Errore fork CROCodrillo");
         endwin();
         exit(EXIT_FAILURE);
     } else if (pid_crocs[i] == 0) {
@@ -113,13 +95,13 @@ for (int i = 0; i < totalCrocs; i++) {
                 frog.y = temp.y;
                 frog.x = temp.x;
     
-            } else if (temp.type == OBJECT_CROCODILE) { // Aggiorna la posizione dei coccodrilli
+            } else if (temp.type == OBJECT_CROCODILE) { // Aggiorna la posizione dei Coccodrilli
                 if (!temp.inGioco) {
                     kill(pid_crocs[temp.id], SIGKILL);
 
                     pid_crocs[temp.id] = fork();
                     if (pid_crocs[temp.id] == -1) {
-                        perror("Errore fork coccodrillo");
+                        perror("Errore fork CROCodrillo");
                         endwin();
                         exit(EXIT_FAILURE);
                     } else if (pid_crocs[temp.id] == 0) {
@@ -156,8 +138,8 @@ for (int i = 0; i < totalCrocs; i++) {
          attron(COLOR_PAIR(4));
         for (int i = 0; i < totalCrocs; i++){
             if (!crocs[i].inGioco) continue;
-            for (int row = 0; row < COCC_HEIGHT; row++) {
-                for (int col = 0; col < COCC_WIDTH; col++) {
+            for (int row = 0; row < CROC_HEIGHT; row++) {
+                for (int col = 0; col < CROC_WIDTH; col++) {
                     if (crocs[i].x + col >= ((COLS - PAVEMENT_WIDTH) / 2) && crocs[i].x + col < ((COLS - PAVEMENT_WIDTH) / 2) + PAVEMENT_WIDTH)
                         mvprintw(crocs[i].y + row, crocs[i].x + col, "%c", SPRITE_CROC);
                 }

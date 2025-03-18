@@ -13,9 +13,10 @@ typedef struct {
     ObjectType type;
     int x;
     int y;
-    int direction; // per i coccodrilli
+    int direction; // per i Coccodrilli
     int initX;     // posizione iniziale per il respawn
     int inGioco;   // 1 se l'oggetto è in gioco, 0 se è "morto"
+    int speed;     // velocità del movimento
 } Entity;
 
 #endif // ENTITY_H
