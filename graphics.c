@@ -1,6 +1,9 @@
 #include "graphics.h"
 #include <ncurses.h>
 
+int taneOccupate[NUM_TANE] = {0};  // 0 = libera, 1 = occupata
+
+
 // Disegna il marciapiede centrato in basso (già esistente)
 void drawPavement() {
     attron(COLOR_PAIR(3));
@@ -50,20 +53,23 @@ void drawMiddlePavement() {
 
 void drawTane() {
     attron(COLOR_PAIR(1));
-    // Calcola la riga per le tane: subito sopra il marciapiede intermedio
     int taneRow = ((LINES - 27) - PAVEMENT_HEIGHT) - TANE_HEIGHT;
-    
     int startCol = (COLS - PAVEMENT_WIDTH) / 2;
-    // Calcola uno slot width preciso per 5 tane
     double slotWidth = (double)PAVEMENT_WIDTH / NUM_TANE + 0.5;
-    
+
     for (int i = 0; i < NUM_TANE; i++) {
-        // Calcola la posizione orizzontale per centrare la tana nello slot
+        if (taneOccupate[i] == 1) { 
+            // Debug: stampa un messaggio per vedere se sta saltando la tana occupata
+            mvprintw(taneRow, startCol + i * (int)slotWidth, " "); // Mostra una "X" invece della tana
+            continue;  // Se la tana è occupata, la saltiamo
+        }
+
         int tanaStartCol = startCol + i * (int)slotWidth + (((int)slotWidth - LARGHEZZA_TANA) / 2);
         for (int j = 0; j < LARGHEZZA_TANA; j++) {
-            // Per semplicità, disegniamo tutte le tane con lo stesso simbolo (ad esempio "T")
-            mvwprintw(stdscr, taneRow, tanaStartCol + j, "T");
+            mvprintw(taneRow, tanaStartCol + j, "T");
         }
     }
     attroff(COLOR_PAIR(1));
 }
+
+

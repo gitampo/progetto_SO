@@ -17,4 +17,5 @@ void drawFrog(const Entity *frog);
 void clearFrog(const Entity *frog);
 void frogProcess(Entity *frog, int fileds[2]);
 
+
 #endif // FROG_H

@@ -128,12 +128,11 @@ for (int i = 0; i < totalCrocs; i++) {
        
         drawRiver(); 
         drawPavement(); 
-         
+        drawMiddlePavement(); // marciapiede intermedio (uguale a quello basso)
+        
         // La rana è già gestita tramite clearFrog() nel processo figlio, 
         // ma qui la ridisegniamo usando drawFrog() 
-        drawFrog(&frog); 
-        drawMiddlePavement(); // marciapiede intermedio (uguale a quello basso)
-        drawTane();           // le 5 tane sopra il marciapiede intermedio
+                // le 5 tane sopra il marciapiede intermedio
 
 
         // Disegna i Coccodrilli
@@ -149,6 +148,8 @@ for (int i = 0; i < totalCrocs; i++) {
         }
          attroff(COLOR_PAIR(4));
         
+        drawFrog(&frog);   
+        drawTane(); 
          
         refresh(); 
         
