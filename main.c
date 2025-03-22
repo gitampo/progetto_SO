@@ -101,7 +101,7 @@ for (int i = 0; i < totalCrocs; i++) {
 
                     pid_crocs[temp.id] = fork();
                     if (pid_crocs[temp.id] == -1) {
-                        perror("Errore fork CROCodrillo");
+                        perror("Errore fork Coccodrillo");
                         endwin();
                         exit(EXIT_FAILURE);
                     } else if (pid_crocs[temp.id] == 0) {
@@ -125,16 +125,18 @@ for (int i = 0; i < totalCrocs; i++) {
  
         // Invece di chiamare clear(), ridisegniamo le aree statiche che "cancellano" le vecchie scritture: 
         // Ridisegna il fiume e il marciapiede: questi sovrascrivono l'area 
+       
         drawRiver(); 
         drawPavement(); 
          
         // La rana è già gestita tramite clearFrog() nel processo figlio, 
         // ma qui la ridisegniamo usando drawFrog() 
         drawFrog(&frog); 
+        drawMiddlePavement(); // marciapiede intermedio (uguale a quello basso)
+        drawTane();           // le 5 tane sopra il marciapiede intermedio
 
-        
 
-         
+        // Disegna i Coccodrilli
          attron(COLOR_PAIR(4));
         for (int i = 0; i < totalCrocs; i++){
             if (!crocs[i].inGioco) continue;
@@ -145,8 +147,7 @@ for (int i = 0; i < totalCrocs; i++) {
                 }
             }
         }
- 
- attroff(COLOR_PAIR(4));
+         attroff(COLOR_PAIR(4));
         
          
         refresh(); 

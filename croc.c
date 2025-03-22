@@ -16,9 +16,9 @@ void creaCrocodiles(Entity crocs[], int startCol, int endCol, int riverStartRow)
             crocs[index].y = riverStartRow + i * CROC_HEIGHT;
             crocs[index].direction = dir;
             if (dir == 1)
-                crocs[index].x = startCol + j * 20; //distanza coccodrilli per riga
+                crocs[index].x = startCol + j * 30; //distanza coccodrilli per riga
             else
-                crocs[index].x = endCol - CROC_WIDTH - j * 20;
+                crocs[index].x = endCol - CROC_WIDTH - j * 30;
             crocs[index].initX = crocs[index].x;
             crocs[index].inGioco = 1; // Imposta inGioco a 1
             index++;
