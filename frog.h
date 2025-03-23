@@ -2,6 +2,7 @@
 #define FROG_H
 
 #include "entity.h"
+#include "collision.h"  // Ora possiamo usare isFrogInTana()
 
 // Dimensioni della rana (usate anche per il disegno e i limiti)
 #define FROG_WIDTH  8
@@ -15,7 +16,7 @@
 // Funzioni per la gestione della rana
 void drawFrog(const Entity *frog);
 void clearFrog(const Entity *frog);
-void frogProcess(Entity *frog, int fileds[2]);
+void frogProcess(Entity *frog, int fileds[2], int toFrog[2]);
 
 
 #endif // FROG_H

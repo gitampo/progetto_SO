@@ -9,6 +9,7 @@
 #include "frog.h"
 #include "croc.h"
 #include "entity.h"  
+#include "collision.h"
 
 int main() {
     initscr();
@@ -35,10 +36,19 @@ int main() {
         endwin();
         exit(EXIT_FAILURE);
     }
+
+    int toFrog[2];
+    if (pipe(toFrog) == -1) {
+        perror("Errore creazione pipe");
+        endwin();
+        exit(EXIT_FAILURE);
+    }
     int flags = fcntl(fileds[0], F_GETFL, 0);
     fcntl(fileds[0], F_SETFL, flags | O_NONBLOCK);
+    fcntl(toFrog[0], F_SETFL, flags | O_NONBLOCK);
     
     // Inizializza la rana (Entity per la rana)
+    int taneOccupate[NUM_TANE];
     Entity frog;
     frog.type = OBJECT_FROG;
     frog.y = LINES - FROG_HEIGHT; 
@@ -62,7 +72,7 @@ creaCrocodiles(crocs, startCol, endCol, riverStartRow);
         exit(EXIT_FAILURE);
     } else if (pid_frog == 0) {
         close(fileds[0]);
-        frogProcess(&frog, fileds);
+        frogProcess(&frog, fileds, toFrog);
         exit(EXIT_SUCCESS);
     }
     
@@ -81,9 +91,9 @@ for (int i = 0; i < totalCrocs; i++) {
     }
 }
 
-
    
     // Padre: chiude il lato di scrittura della pipe
+    close(toFrog[0]);
     close(fileds[1]);
     
     // Ciclo principale: legge dalla pipe e ridisegna la scena senza usare clear()
@@ -122,10 +132,23 @@ for (int i = 0; i < totalCrocs; i++) {
                 } 
             } 
         } 
+
+        // verifica collisioni
+        int tanaIndex = isFrogInTana(&frog);
+        if (tanaIndex != -1) {
+            taneOccupate[tanaIndex] = 1;  // Segna la tana come occupata
+            frog.x = (COLS - FROG_WIDTH) / 2; // Riporta la rana al centro in basso
+            frog.y = LINES - FROG_HEIGHT;
+            write(toFrog[1], &frog, sizeof(Entity)); // Invia la nuova posizione
+        }
+
+        int colpita = isFrogKilledByBullet(&frog, bullets)
+        if (rana.collide(proiettile)){
+
+        }
  
         // Invece di chiamare clear(), ridisegniamo le aree statiche che "cancellano" le vecchie scritture: 
         // Ridisegna il fiume e il marciapiede: questi sovrascrivono l'area 
-       
         drawRiver(); 
         drawPavement(); 
         drawMiddlePavement(); // marciapiede intermedio (uguale a quello basso)

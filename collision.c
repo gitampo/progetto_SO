@@ -6,13 +6,11 @@
 #include <ncurses.h>
 #include <fcntl.h> // Per O_NONBLOCK
 #include "graphics.h"
-#include "frog.h"
 #include "croc.h"
 #include "entity.h"
 #include "collision.h"
 
-
-extern int taneOccupate[NUM_TANE];  // Permette a frog.c di usare la variabile
+  // Permette a frog.c di usare la variabile
 
 int isFrogInTana(const Entity *frog) {
     int taneRow = ((LINES - 27) - PAVEMENT_HEIGHT) - TANE_HEIGHT;

@@ -2,7 +2,6 @@
 #include "frog.h"
 #include <ncurses.h>
 #include <unistd.h>
-#include "collision.h"  // Ora possiamo usare isFrogInTana()
 
 extern int taneOccupate[NUM_TANE];  // Permette a frog.c di usare la variabile
  
@@ -20,13 +19,14 @@ void clearFrog(const Entity *frog) {
     } 
 } 
  
-void frogProcess(Entity *frog, int pipeFD[2]) {
+void frogProcess(Entity *frog, int pipeFD[2], int toFrog[2]) {
     frog->type = OBJECT_FROG;
     // Calcola i limiti validi per la rana basati sull'area del fiume/marciapiede
     int validX_min = (COLS - PAVEMENT_WIDTH) / 2;
     int validX_max = validX_min + PAVEMENT_WIDTH - FROG_WIDTH;
     int validY_min = LINES - 30.5;              // dove inizia il fiume
     int validY_max = LINES - FROG_HEIGHT;       // dove la rana finisce (per rimanere visibile)
+    Entity temp;
     
 
     while (1) {
@@ -60,13 +60,12 @@ void frogProcess(Entity *frog, int pipeFD[2]) {
             }
             
         // Dentro il loop della rana
-        int tanaIndex = isFrogInTana(frog);
-        if (tanaIndex != -1) {
-            taneOccupate[tanaIndex] = 1;  // Segna la tana come occupata
-            frog->x = (COLS - FROG_WIDTH) / 2; // Riporta la rana al centro in basso
-            frog->y = LINES - FROG_HEIGHT;
-        }
+        
         write(pipeFD[1], frog, sizeof(Entity));
+        if (read(toFrog[0], &temp, sizeof(Entity)) > 0) {
+            frog->y = temp.y;
+            frog->x = temp.x;
+        }
         }
         usleep(100000);
     }
