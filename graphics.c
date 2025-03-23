@@ -58,12 +58,6 @@ void drawTane() {
     double slotWidth = (double)PAVEMENT_WIDTH / NUM_TANE + 0.5;
 
     for (int i = 0; i < NUM_TANE; i++) {
-        if (taneOccupate[i] == 1) { 
-            // Debug: stampa un messaggio per vedere se sta saltando la tana occupata
-            mvprintw(taneRow, startCol + i * (int)slotWidth, " "); // Mostra una "X" invece della tana
-            continue;  // Se la tana è occupata, la saltiamo
-        }
-
         int tanaStartCol = startCol + i * (int)slotWidth + (((int)slotWidth - LARGHEZZA_TANA) / 2);
         for (int j = 0; j < LARGHEZZA_TANA; j++) {
             mvprintw(taneRow, tanaStartCol + j, "T");
