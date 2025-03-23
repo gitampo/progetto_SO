@@ -51,7 +51,7 @@ void drawMiddlePavement() {
     attroff(COLOR_PAIR(3));
 }
 
-void drawTane() {
+void drawTane(int statusTane[NUM_TANE]) {
     attron(COLOR_PAIR(1));
     int taneRow = ((LINES - 27) - PAVEMENT_HEIGHT) - TANE_HEIGHT;
     int startCol = (COLS - PAVEMENT_WIDTH) / 2;
@@ -60,7 +60,7 @@ void drawTane() {
     for (int i = 0; i < NUM_TANE; i++) {
         int tanaStartCol = startCol + i * (int)slotWidth + (((int)slotWidth - LARGHEZZA_TANA) / 2);
         for (int j = 0; j < LARGHEZZA_TANA; j++) {
-            mvprintw(taneRow, tanaStartCol + j, "T");
+            mvprintw(taneRow, tanaStartCol + j, statusTane[i] ? " " : "T");
         }
     }
     attroff(COLOR_PAIR(1));

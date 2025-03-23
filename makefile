@@ -3,16 +3,16 @@ CFLAGS = -Wall -Wextra -std=c99
 
 all: frogger
 
-frogger: main.o frog.o croc.o graphics.o
+frogger: main.o frog.o croc.o collision.o graphics.o
 	$(CC) $(CFLAGS) -o frogger main.o frog.o croc.o collision.o graphics.o -lncurses
 
-main.o: main.c frog.h croc.h graphics.h
+main.o: main.c frog.h croc.h graphics.h collision.h entity.h
 	$(CC) $(CFLAGS) -c main.c
 
-frog.o: frog.c frog.h graphics.h collision.h
+frog.o: frog.c frog.h graphics.h collision.h entity.h
 	$(CC) $(CFLAGS) -c frog.c
 
-croc.o: croc.c croc.h graphics.h
+croc.o: croc.c croc.h graphics.h collision.h entity.h
 	$(CC) $(CFLAGS) -c croc.c
 
 collision.o: collision.c collision.h

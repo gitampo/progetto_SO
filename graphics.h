@@ -17,6 +17,6 @@
 void drawPavement();
 void drawRiver();
 void drawMiddlePavement();
-void drawTane();
+void drawTane(int statusTane[NUM_TANE]);
 
 #endif // GRAPHICS_H

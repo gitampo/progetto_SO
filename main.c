@@ -48,7 +48,7 @@ int main() {
     fcntl(toFrog[0], F_SETFL, flags | O_NONBLOCK);
     
     // Inizializza la rana (Entity per la rana)
-    int taneOccupate[NUM_TANE];
+    int taneOccupate[NUM_TANE] = {0};  // 0 = libera, 1 = occupata
     Entity frog;
     frog.type = OBJECT_FROG;
     frog.y = LINES - FROG_HEIGHT; 
@@ -142,10 +142,7 @@ for (int i = 0; i < totalCrocs; i++) {
             write(toFrog[1], &frog, sizeof(Entity)); // Invia la nuova posizione
         }
 
-        int colpita = isFrogKilledByBullet(&frog, bullets)
-        if (rana.collide(proiettile)){
-
-        }
+        
  
         // Invece di chiamare clear(), ridisegniamo le aree statiche che "cancellano" le vecchie scritture: 
         // Ridisegna il fiume e il marciapiede: questi sovrascrivono l'area 
@@ -172,7 +169,7 @@ for (int i = 0; i < totalCrocs; i++) {
          attroff(COLOR_PAIR(4));
         
         drawFrog(&frog);   
-        drawTane(); 
+        drawTane(taneOccupate); 
          
         refresh(); 
         
