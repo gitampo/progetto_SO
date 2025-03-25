@@ -26,6 +26,7 @@ int main() {
     if (can_change_color()) {
         init_color(COLOR_YELLOW, 500, 250, 0);
     }
+    init_pair(5, COLOR_GREEN, COLOR_GREEN);
     
     nodelay(stdscr, TRUE);
     
@@ -170,6 +171,8 @@ for (int i = 0; i < totalCrocs; i++) {
         
         drawFrog(&frog);   
         drawTane(taneOccupate); 
+
+        
          
         refresh(); 
         

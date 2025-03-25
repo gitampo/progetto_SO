@@ -9,8 +9,9 @@
 #include "croc.h"
 #include "entity.h"
 #include "collision.h"
+#include "frog.h"
 
-  // Permette a frog.c di usare la variabile
+// Permette a frog.c di usare la variabile
 
 int isFrogInTana(const Entity *frog) {
     int taneRow = ((LINES - 27) - PAVEMENT_HEIGHT) - TANE_HEIGHT;

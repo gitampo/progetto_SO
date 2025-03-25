@@ -24,13 +24,19 @@ void frogProcess(Entity *frog, int pipeFD[2], int toFrog[2]) {
     // Calcola i limiti validi per la rana basati sull'area del fiume/marciapiede
     int validX_min = (COLS - PAVEMENT_WIDTH) / 2;
     int validX_max = validX_min + PAVEMENT_WIDTH - FROG_WIDTH;
-    int validY_min = LINES - 30.5;              // dove inizia il fiume
+    int validY_min = LINES - 33;              // dove inizia il fiume
     int validY_max = LINES - FROG_HEIGHT;       // dove la rana finisce (per rimanere visibile)
     Entity temp;
     
 
     while (1) {
         int ch = getch();
+
+        if (read(toFrog[0], &temp, sizeof(Entity)) > 0) {
+            frog->y = temp.y;
+            frog->x = temp.x;
+        }
+        
         if (ch != ERR) {
             switch(ch) {
                 case KEY_UP:
@@ -62,10 +68,7 @@ void frogProcess(Entity *frog, int pipeFD[2], int toFrog[2]) {
         // Dentro il loop della rana
         
         write(pipeFD[1], frog, sizeof(Entity));
-        if (read(toFrog[0], &temp, sizeof(Entity)) > 0) {
-            frog->y = temp.y;
-            frog->x = temp.x;
-        }
+        
         }
         usleep(100000);
     }

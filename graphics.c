@@ -52,18 +52,33 @@ void drawMiddlePavement() {
 }
 
 void drawTane(int statusTane[NUM_TANE]) {
-    attron(COLOR_PAIR(1));
+    
     int taneRow = ((LINES - 27) - PAVEMENT_HEIGHT) - TANE_HEIGHT;
     int startCol = (COLS - PAVEMENT_WIDTH) / 2;
-    double slotWidth = (double)PAVEMENT_WIDTH / NUM_TANE + 0.5;
-
+    double slotWidth = (double)PAVEMENT_WIDTH / NUM_TANE;
+    
     for (int i = 0; i < NUM_TANE; i++) {
         int tanaStartCol = startCol + i * (int)slotWidth + (((int)slotWidth - LARGHEZZA_TANA) / 2);
         for (int j = 0; j < LARGHEZZA_TANA; j++) {
-            mvprintw(taneRow, tanaStartCol + j, statusTane[i] ? " " : "T");
+            if (statusTane[i]) {
+
+                attron(COLOR_PAIR(3));
+                mvaddch(taneRow, tanaStartCol + j, ' ');
+                mvaddch(taneRow + 1, tanaStartCol + j, ' ');
+                mvaddch(taneRow + 2, tanaStartCol + j, ' ');
+                attroff(COLOR_PAIR(3));
+            } else {
+                attron(COLOR_PAIR(5));
+                // Stampa un singolo carattere per ogni riga della sprite della tana
+                mvaddch(taneRow, tanaStartCol + j, SYMBOL_TANA_1[j]);
+                mvaddch(taneRow + 1, tanaStartCol + j, SYMBOL_TANA_2[j]);
+                mvaddch(taneRow + 2, tanaStartCol + j, SYMBOL_TANA_3[j]);
+                attroff(COLOR_PAIR(5));
+            }
         }
     }
-    attroff(COLOR_PAIR(1));
+   
 }
+
 
 

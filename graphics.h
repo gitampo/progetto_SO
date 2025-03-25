@@ -9,9 +9,13 @@
 
 // Nuove costanti per l'area superiore:
 #define MIDDLE_SIDEWALK_HEIGHT 3   // Altezza del marciapiede intermedio
-#define TANE_HEIGHT 1              // Altezza delle tane
+#define TANE_HEIGHT 3              // Altezza delle tane
 #define NUM_TANE 5                 // Numero di tane (slot)
-#define LARGHEZZA_TANA 8          // Larghezza della tana
+#define LARGHEZZA_TANA 9          // Larghezza della tana
+
+#define SYMBOL_TANA_1 "---------"        
+#define SYMBOL_TANA_2 "|       |"
+#define SYMBOL_TANA_3 "|       |"
 
 // Funzioni di disegno
 void drawPavement();
