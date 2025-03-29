@@ -26,6 +26,8 @@ int main() {
     if (can_change_color()) {
         init_color(COLOR_YELLOW, 500, 250, 0);
     }
+    init_pair(5, COLOR_GREEN, COLOR_GREEN);
+    init_pair(6, COLOR_BLACK, COLOR_BLACK);
     
     nodelay(stdscr, TRUE);
     
@@ -141,22 +143,25 @@ for (int i = 0; i < totalCrocs; i++) {
             frog.y = LINES - FROG_HEIGHT;
             write(toFrog[1], &frog, sizeof(Entity)); // Invia la nuova posizione
         }
-
+        bool inBetween(int value, int min, int max) {
+            return (value >= min && value <= max);
+        }
+        
         
  
         // Invece di chiamare clear(), ridisegniamo le aree statiche che "cancellano" le vecchie scritture: 
         // Ridisegna il fiume e il marciapiede: questi sovrascrivono l'area 
+         // Cancella la rana dalla sua posizione precedente
         drawRiver(); 
         drawPavement(); 
         drawMiddlePavement(); // marciapiede intermedio (uguale a quello basso)
         
         // La rana è già gestita tramite clearFrog() nel processo figlio, 
         // ma qui la ridisegniamo usando drawFrog() 
-                // le 5 tane sopra il marciapiede intermedio
-
+        // le 5 tane sopra il marciapiede intermedio
 
         // Disegna i Coccodrilli
-         attron(COLOR_PAIR(4));
+        attron(COLOR_PAIR(4));
         for (int i = 0; i < totalCrocs; i++){
             if (!crocs[i].inGioco) continue;
             for (int row = 0; row < CROC_HEIGHT; row++) {
@@ -166,13 +171,12 @@ for (int i = 0; i < totalCrocs; i++) {
                 }
             }
         }
-         attroff(COLOR_PAIR(4));
-        
-        drawFrog(&frog);   
-        drawTane(taneOccupate); 
-         
-        refresh(); 
-        
+        attroff(COLOR_PAIR(4));
+
+        drawVoid();
+        drawFrog(&frog);
+        drawTane(taneOccupate);  
+        refresh();     
     } 
      
     endwin(); 
