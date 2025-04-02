@@ -92,3 +92,8 @@ void drawVoid() {
     attroff(COLOR_PAIR(6));
 }
 
+void drawGrenade(int y, int x) {
+    attron(COLOR_PAIR(7));
+    mvprintw(y, x, "O");
+    attroff(COLOR_PAIR(7));
+}

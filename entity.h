@@ -3,8 +3,12 @@
 
 typedef enum {
     OBJECT_FROG,
-    OBJECT_CROCODILE
+    OBJECT_CROCODILE,
+    CREATE_GRENADE,
+    OBJECT_GRENADE
 } ObjectType;
+
+
 
 #define FUORI -1000  // Valore speciale per indicare che l'oggetto è fuori
 

@@ -31,6 +31,7 @@ void frogProcess(Entity *frog, int pipeFD[2], int toFrog[2]) {
 
     while (1) {
         int ch = getch();
+        Entity payload;
 
         if (read(toFrog[0], &temp, sizeof(Entity)) > 0) {
             frog->y = temp.y;
@@ -44,29 +45,42 @@ void frogProcess(Entity *frog, int pipeFD[2], int toFrog[2]) {
                         frog->y -= FROG_HEIGHT;
                     else
                         frog->y = validY_min;
+                    
+                    payload = *frog;
                     break;
                 case KEY_DOWN:
                     if (frog->y + FROG_HEIGHT <= validY_max)
                         frog->y += FROG_HEIGHT;
                     else
                         frog->y = validY_max;
+
+                    payload = *frog;    
                     break;
                 case KEY_LEFT:
                     if (frog->x - FROG_WIDTH >= validX_min)
                         frog->x -= FROG_WIDTH;
                     else
                         frog->x = validX_min;
+
+                    payload = *frog;
                     break;
                 case KEY_RIGHT:
                     if (frog->x + FROG_WIDTH <= validX_max)
                         frog->x += FROG_WIDTH;
                     else
                         frog->x = validX_max;
+
+                    payload = *frog;
+                    break;
+                case ' ':
+                    payload.type = CREATE_GRENADE;
+                    payload.x = frog->x; // Posizione centrale della rana 
+                    payload.y = frog->y; // Posizione sopra la rana
                     break;
             }
             
 
-        write(pipeFD[1], frog, sizeof(Entity));
+        write(pipeFD[1], &payload, sizeof(Entity));
         
         }
         usleep(100000);

@@ -28,6 +28,7 @@ int main() {
     }
     init_pair(5, COLOR_GREEN, COLOR_GREEN);
     init_pair(6, COLOR_BLACK, COLOR_BLACK);
+    init_pair(7, COLOR_WHITE, COLOR_BLACK);
     
     nodelay(stdscr, TRUE);
     
@@ -57,14 +58,14 @@ int main() {
     frog.x = (COLS - FROG_WIDTH) / 2;
     
     // Calcola i limiti e inizializza l'area del fiume
-int totalCrocs = LANES * CROCS_PER_LANE; // 16 Coccodrilli totali
-Entity crocs[totalCrocs];
-int index = 0;
-int startCol = (COLS - PAVEMENT_WIDTH) / 2;
-int endCol = startCol + PAVEMENT_WIDTH;
-int riverStartRow = LINES - 27;  // Calcola il punto di partenza del fiume (come in drawRiver)
+    int totalCrocs = LANES * CROCS_PER_LANE; // 16 Coccodrilli totali
+    Entity crocs[totalCrocs];
+    int index = 0;
+    int startCol = (COLS - PAVEMENT_WIDTH) / 2;
+    int endCol = startCol + PAVEMENT_WIDTH;
+    int riverStartRow = LINES - 27;  // Calcola il punto di partenza del fiume (come in drawRiver)
+    int totalGrenades = 20; // Inizializza il numero totale di granate a 0
 
-creaCrocodiles(crocs, startCol, endCol, riverStartRow);
     
     // Fork per la rana
     pid_t pid_frog = fork();
@@ -78,20 +79,30 @@ creaCrocodiles(crocs, startCol, endCol, riverStartRow);
         exit(EXIT_SUCCESS);
     }
     
-// Fork per ogni CROCodrillo (ogni processo figlio gestisce un singolo CROCodrillo)
-pid_t pid_crocs[totalCrocs];
-for (int i = 0; i < totalCrocs; i++) {
-    pid_crocs[i] = fork();
-    if (pid_crocs[i] == -1) {
-        perror("Errore fork CROCodrillo");
-        endwin();
-        exit(EXIT_FAILURE);
-    } else if (pid_crocs[i] == 0) {
-        close(fileds[0]);
-        crocProcess(&crocs[i], fileds[1]);
-        exit(EXIT_SUCCESS);
+    // Fork per ogni CROCodrillo (ogni processo figlio gestisce un singolo CROCodrillo)
+    creaCrocodiles(crocs, startCol, endCol, riverStartRow);
+
+    pid_t pid_crocs[totalCrocs];
+    for (int i = 0; i < totalCrocs; i++) {
+        pid_crocs[i] = fork();
+        if (pid_crocs[i] == -1) {
+            perror("Errore fork CROCodrillo");
+            endwin();
+            exit(EXIT_FAILURE);
+        } else if (pid_crocs[i] == 0) {
+            close(fileds[0]);
+            crocProcess(&crocs[i], fileds[1]);
+            exit(EXIT_SUCCESS);
+        }
     }
-}
+
+    pid_t pid_grenades[totalGrenades];
+    int i_grenades = 0;
+    Entity grenades[totalGrenades];
+    for(int i = 0; i < totalGrenades; i++){
+        grenades[i].type = OBJECT_GRENADE;
+        grenades[i].inGioco = 0;
+    }
 
    
     // Padre: chiude il lato di scrittura della pipe
@@ -121,19 +132,46 @@ for (int i = 0; i < totalCrocs; i++) {
                         close(fileds[0]);
                         crocs[temp.id].inGioco = 1;
                         crocs[temp.id].x = 
-                        temp.direction == 1 ?
-                            crocs[temp.id].initX
+                        temp.direction == 1 
+                            ? crocs[temp.id].initX 
                             : crocs[temp.id].initX;
                         crocProcess(&crocs[temp.id], fileds[1]);
                         exit(EXIT_SUCCESS);
                     }
-
                 } else {
                     crocs[temp.id].y = temp.y;
-                    crocs[temp.id].x = temp.x; 
-                } 
+                    crocs[temp.id].x = temp.x;
+                }
+            } else if (temp.type == CREATE_GRENADE) {
+                for(int i = 0; i < 2; i++){
+                    pid_grenades[i_grenades] = fork();
+                    if (pid_grenades[i_grenades] == -1) {
+                        perror("Errore fork granata");
+                        endwin();
+                        exit(EXIT_FAILURE);
+                    } else if (pid_grenades[i_grenades] == 0) {
+                        close(fileds[0]);
+                        grenades[i_grenades].type = OBJECT_GRENADE;
+                        grenades[i_grenades].id = i_grenades;
+                        grenades[i_grenades].inGioco = 1;
+                        grenades[i_grenades].x = temp.x + (i * 2 - 1) * (FROG_WIDTH / 2);
+                        grenades[i_grenades].y = temp.y;
+                        grenades[i_grenades].direction = i * 2 - 1; // Direzione della granata
+                        grenades[i_grenades].speed = 1;
+                        grenadeProcess(&grenades[i_grenades], fileds[1]);
+                        exit(EXIT_SUCCESS);
+                    }
+                    i_grenades = (i_grenades + 1) % totalGrenades;
+                }
+            } else if(temp.type == OBJECT_GRENADE) {
+                grenades[temp.id].y = temp.y;
+                grenades[temp.id].x = temp.x;
+                if (temp.x < startCol || temp.x > endCol) {
+                    kill(pid_grenades[temp.id], SIGKILL);
+                    grenades[temp.id].inGioco = 0;
+                }
             } 
-        } 
+        }
 
         // verifica collisioni
         int tanaIndex = isFrogInTana(&frog);
@@ -142,9 +180,6 @@ for (int i = 0; i < totalCrocs; i++) {
             frog.x = (COLS - FROG_WIDTH) / 2; // Riporta la rana al centro in basso
             frog.y = LINES - FROG_HEIGHT;
             write(toFrog[1], &frog, sizeof(Entity)); // Invia la nuova posizione
-        }
-        bool inBetween(int value, int min, int max) {
-            return (value >= min && value <= max);
         }
         
         
@@ -172,10 +207,15 @@ for (int i = 0; i < totalCrocs; i++) {
             }
         }
         attroff(COLOR_PAIR(4));
-
+        
         drawVoid();
         drawFrog(&frog);
-        drawTane(taneOccupate);  
+        drawTane(taneOccupate);
+        
+        for(int i = 0; i < totalGrenades; i++){
+            if (!grenades[i].inGioco) continue;
+            drawGrenade(grenades[i].y, grenades[i].x);
+        } 
         refresh();     
     } 
      
