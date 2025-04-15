@@ -30,7 +30,7 @@ void drawRiver() {
     }
     for (int r = startRow; r < endRow; r++) {
         for (int c = startCol; c < endCol; c++) {
-            mvprintw(r, c, "~");
+            mvprintw(r, c, " ");
         }
     }
     attroff(COLOR_PAIR(2));
@@ -96,4 +96,11 @@ void drawGrenade(int y, int x) {
     attron(COLOR_PAIR(7));
     mvprintw(y, x, "O");
     attroff(COLOR_PAIR(7));
+}
+
+// Funzione per disegnare un bullet
+void drawBullet(Entity *bullet) {
+    if (bullet->inGioco) {
+        mvaddch(bullet->y, bullet->x, '*');  // Disegna il bullet con un simbolo
+    }
 }

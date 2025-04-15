@@ -1,25 +1,25 @@
+# Makefile per il progetto Frogger
+
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c99
+CFLAGS = -Wall -Wextra -std=c99 -pedantic -O2
+LDFLAGS = -lncurses
 
-all: frogger
+# Elenco dei sorgenti: usa collision.c al posto di collisioni.c
+SOURCES = main.c bullet.c collision.c croc.c frog.c graphics.c
+OBJECTS = $(SOURCES:.c=.o)
 
-frogger: main.o frog.o croc.o collision.o graphics.o
-	$(CC) $(CFLAGS) -o frogger main.o frog.o croc.o collision.o graphics.o -lncurses
+# Nome dell'eseguibile
+TARGET = frogger
 
-main.o: main.c frog.h croc.h graphics.h collision.h entity.h
-	$(CC) $(CFLAGS) -c main.c
+.PHONY: all clean
 
-frog.o: frog.c frog.h graphics.h collision.h entity.h
-	$(CC) $(CFLAGS) -c frog.c
+all: $(TARGET)
 
-croc.o: croc.c croc.h graphics.h collision.h entity.h
-	$(CC) $(CFLAGS) -c croc.c
+$(TARGET): $(OBJECTS)
+	$(CC) $(OBJECTS) -o $(TARGET) $(LDFLAGS)
 
-collision.o: collision.c collision.h
-	$(CC) $(CFLAGS) -c collision.c
-
-graphics.o: graphics.c graphics.h
-	$(CC) $(CFLAGS) -c graphics.c
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f *.o frogger
+	rm -f $(OBJECTS) $(TARGET)
