@@ -5,6 +5,9 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "bullet.h"
+
+
 
 void creaCrocodiles(Entity crocs[], int startCol, int endCol, int riverStartRow) {
     int index = 0;
@@ -24,7 +27,6 @@ void creaCrocodiles(Entity crocs[], int startCol, int endCol, int riverStartRow)
             index++;
         }
     }
-    
 }
 
 void crocProcess(Entity *croc, int pipeFD) {
@@ -32,35 +34,54 @@ void crocProcess(Entity *croc, int pipeFD) {
     int endCol = startCol + PAVEMENT_WIDTH;
     int riverStart = LINES - 27; // dove inizia il fiume, come in drawRiver()
     
+    int local_proj_counter = 0;
+
     while (1) {
         if (croc->inGioco) {
-            // Aggiorna la posizione in base alla direzione
+            // Aggiorna la posizione del coccodrillo
             croc->x += croc->direction;
-            // Controlla i limiti orizzontali e respawna se necessario
             if (croc->x < (startCol - CROC_WIDTH)) {
                 croc->x = endCol;
             } else if (croc->x > endCol) {
                 croc->x = startCol - CROC_WIDTH;
             }
         }
-        // Invia l'aggiornamento sulla pipe
+
+        // Invia la posizione aggiornata del coccodrillo al padre tramite la pipe
         write(pipeFD, croc, sizeof(Entity));
         
-        // Calcola la corsia in base alla coordinata Y
+        // Possibilità di sparare un bullet: condizione casuale (circa 1% per iterazione)
+        if (croc->inGioco && (rand() % 1000) < 10) {
+            Entity bullet;
+            int offsetX = (croc->direction == 1) ? CROC_WIDTH : -1;
+            int bulletStartX = croc->x + offsetX;
+            int bulletStartY = croc->y + (CROC_HEIGHT / 2);
+            bullet.id = croc->id * 1000 + local_proj_counter++; // Un ID univoco per il bullet
+            bullet.type = OBJECT_BULLET;
+            createBullet(&bullet, bulletStartX, bulletStartY, croc->direction, 0); // Non è una granata
+            
+            pid_t pid_bullet = fork();
+            if (pid_bullet == 0) {
+                // Processo figlio: gestisce il movimento del bullet
+                bulletProcess(&bullet, pipeFD);
+                exit(EXIT_SUCCESS);  // Termina il processo figlio
+            }
+        }
+        
+        // Calcola il ritardo in base alla corsia
         int lane = (croc->y - riverStart) / CROC_HEIGHT;
         int delay;
         switch (lane) {
-            case 0: delay = 500000; break; // corsia 0, delay 500ms
-            case 1: delay = 400000; break; // corsia 1, delay 400ms
-            case 2: delay = 350000; break; // corsia 2, delay 350ms
-            case 3: delay = 300000; break; // corsia 3, delay 300ms
-            case 4: delay = 250000; break; // corsia 4, delay 250ms
-            case 5: delay = 200000; break; // corsia 5, delay 200ms
-            case 6: delay = 150000; break; // corsia 6, delay 150ms
-            case 7: delay = 100000; break; // corsia 7, delay 100ms
+            case 0: delay = 500000; break;
+            case 1: delay = 400000; break;
+            case 2: delay = 350000; break;
+            case 3: delay = 300000; break;
+            case 4: delay = 250000; break;
+            case 5: delay = 200000; break;
+            case 6: delay = 150000; break;
+            case 7: delay = 100000; break;
             default: delay = 400000; break;
         }
         usleep(delay);
     }
 }
-

@@ -1,11 +1,15 @@
 #ifndef ENTITY_H
 #define ENTITY_H
 
+#include <sys/types.h>
+
+
 typedef enum {
     OBJECT_FROG,
     OBJECT_CROCODILE,
     CREATE_GRENADE,
-    OBJECT_GRENADE
+    OBJECT_GRENADE,
+    OBJECT_BULLET,
 } ObjectType;
 
 
@@ -22,6 +26,7 @@ typedef struct {
     int inGioco;
     int speed;             // Se usato per altri scopi
     int collisionCooldown; // 0 se la collisione è attiva, >0 se in cooldown
+    pid_t pid;  
 } Entity;
 
 #endif // ENTITY_H
