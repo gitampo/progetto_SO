@@ -47,3 +47,5 @@ void grenadeProcess(Entity *grenade, int pipeFD[2]) {
         write(pipeFD[1], grenade, sizeof(Entity)); // Invia la posizione della granata al padre
     }
 }
+
+

@@ -21,6 +21,8 @@
 void drawPavement();
 void drawRiver();
 void drawMiddlePavement();
+void drawVoid();
+void drawGrenade(int y, int x);
 void drawTane(int statusTane[NUM_TANE]);
 
 #endif // GRAPHICS_H

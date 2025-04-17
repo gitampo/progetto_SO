@@ -56,6 +56,9 @@ int main() {
     frog.type = OBJECT_FROG;
     frog.y = LINES - FROG_HEIGHT; 
     frog.x = (COLS - FROG_WIDTH) / 2;
+    int frogOnCrocodile = 0;
+    int crocodileSpeed = 0;
+
     
     // Calcola i limiti e inizializza l'area del fiume
     int totalCrocs = LANES * CROCS_PER_LANE; // 16 Coccodrilli totali
@@ -79,7 +82,7 @@ int main() {
         exit(EXIT_SUCCESS);
     }
     
-    // Fork per ogni CROCodrillo (ogni processo figlio gestisce un singolo CROCodrillo)
+    // Fork per ogni coccodrillo (ogni processo figlio gestisce un singolo CROCodrillo)
     creaCrocodiles(crocs, startCol, endCol, riverStartRow);
 
     pid_t pid_crocs[totalCrocs];
@@ -112,6 +115,7 @@ int main() {
     // Ciclo principale: legge dalla pipe e ridisegna la scena senza usare clear()
     Entity temp;
     while (1) {
+        frogOnCrocodile = 0;
         if (read(fileds[0], &temp, sizeof(Entity)) > 0) {
             if (temp.type == OBJECT_FROG) { // Aggiorna la posizione della rana
         
@@ -181,9 +185,7 @@ int main() {
             frog.y = LINES - FROG_HEIGHT;
             write(toFrog[1], &frog, sizeof(Entity)); // Invia la nuova posizione
         }
-        
-        
- 
+
         // Invece di chiamare clear(), ridisegniamo le aree statiche che "cancellano" le vecchie scritture: 
         // Ridisegna il fiume e il marciapiede: questi sovrascrivono l'area 
          // Cancella la rana dalla sua posizione precedente
@@ -207,6 +209,20 @@ int main() {
             }
         }
         attroff(COLOR_PAIR(4));
+
+        for (int i = 0; i < totalCrocs; i++) {
+            if (!crocs[i].inGioco) continue;
+            if (crocs[i].y == frog.y && crocs[i].x == frog.x) {
+                frogOnCrocodile = 1;
+                crocodileSpeed = crocs[i].speed;
+            } else if (crocs[i].y == frog.y && crocs[i].x + FROG_WIDTH >= frog.x && crocs[i].x <= frog.x + FROG_WIDTH) {
+                frogOnCrocodile = 1;
+                crocodileSpeed = crocs[i].speed;
+            }
+            
+        }
+
+        
         
         drawVoid();
         drawFrog(&frog);
