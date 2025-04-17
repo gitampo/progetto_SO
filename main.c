@@ -12,6 +12,8 @@
 #include "collision.h"
 #include "bullet.h"
 
+//ciao
+
 int main() {
     initscr();
     cbreak();
