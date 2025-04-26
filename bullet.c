@@ -27,12 +27,12 @@ void bulletProcess(Entity *bullet, int pipeFD) {
     int endCol = startCol + PAVEMENT_WIDTH;
 
     while (1) {
-        bullet->x += bullet->direction * bullet->speed;  // Muovi il bullet
-
-        // Verifica se il bullet ha superato il fiume (endCol)
+       bullet->x += bullet->direction * bullet->speed;  // Muovi la granata
+        //bullet->x += bullet->direction;  // Muovi la granata
+        // Verifica se la granata ha superato il fiume (endCol)
         if (bullet->x >= endCol || bullet->x < startCol) {
-            bullet->inGioco = 0;  // Imposta lo stato del proiettile come inattivo
-            write(pipeFD, bullet, sizeof(Entity));  // Invia al padre per rimuovere il bullet
+            bullet->inGioco = 0;  // Imposta lo stato della granata come inattiva
+            write(pipeFD, bullet, sizeof(Entity));  // Invia al padre per rimuovere la granata
 
             close(pipeFD);
 
@@ -45,11 +45,12 @@ void bulletProcess(Entity *bullet, int pipeFD) {
             _exit(0);  // Termina il processo figlio
         }
 
-        // Scrivi la posizione aggiornata del bullet sulla pipe
+        // Scrivi la posizione aggiornata della granata sulla pipe
         write(pipeFD, bullet, sizeof(Entity));
         usleep(80000);  // Delay per il movimento
     }
 }
+
 
 
 
@@ -59,7 +60,7 @@ void createBullet(Entity *bullet, int x, int y, int direction, int isGrenade) {
     bullet->x = x;
     bullet->y = y;
     bullet->direction = direction;
-    bullet->type = isGrenade ? OBJECT_GRENADE : OBJECT_BULLET;  // Usa OBJECT_PROJECTILE
+    bullet->type = isGrenade ? OBJECT_GRENADE : OBJECT_BULLET;  
     bullet->inGioco = 1;
     bullet->speed = isGrenade ? 2 : 1; // Granate sono più lente
 }

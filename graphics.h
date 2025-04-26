@@ -23,20 +23,12 @@
 void drawPavement();
 void drawRiver();
 void drawMiddlePavement();
-<<<<<<< HEAD
-void drawVoid();
-void drawGrenade(int y, int x);
-=======
 void drawGrenade(int grenadeX, int grenadeY);
 void drawVoid();
 >>>>>>> 7dd54a68c627de98bd24141408241068ca4d13df
 void drawTane(int statusTane[NUM_TANE]);
 // Dichiarazione della funzione per disegnare un bullet
 void drawBullet(Entity *bullet);  // Aggiungi questa dichiarazione
-
-// Dichiarazioni delle altre funzioni di disegno
 void drawGrenade(int y, int x);
-// Altre dichiarazioni di funzioni per il disegno
-
 
 #endif // GRAPHICS_H

@@ -40,12 +40,4 @@ bool collision(Entity frog, Entity tana){
            inBetween(frog.x + FROG_WIDTH, tana.x, tana.x + LARGHEZZA_TANA);
 }
 
-void grenadeProcess(Entity *grenade, int pipeFD[2]) {
-    while (1) {
-        grenade->x += grenade->direction * grenade->speed; // Muovi la granata
-        usleep(100000); // Aspetta 0.1 secondi
-        write(pipeFD[1], grenade, sizeof(Entity)); // Invia la posizione della granata al padre
-    }
-}
-
 

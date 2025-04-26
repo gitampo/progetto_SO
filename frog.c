@@ -69,26 +69,29 @@ void frogProcess(Entity *frog, int fileds[2], int toFrog[2]) {
                         frog->x = validX_max;
                     payload = *frog;
                     break;
-                    case ' ':
-                    payload.type = CREATE_GRENADE;
-                    payload.x = frog->x; // Posizione centrale della rana
-                    payload.y = frog->y; // Posizione sopra la rana
-                
-                    // Lancio della granata a sinistra
+                case ' ':
+                    // Granata a sinistra
+                    payload.type = OBJECT_GRENADE;
+                    payload.x = frog->x;  // Posizione centrale della rana
+                    payload.y = frog->y;  // Posizione sopra la rana
+                    
+                    // Granata a sinistra
                     if (fork() == 0) {
                         Entity grenade_left;
                         createBullet(&grenade_left, payload.x - 1, payload.y, -1, 1); // Granata a sinistra
                         grenade_left.pid = getpid();
                         bulletProcess(&grenade_left, fileds); // Gestisce il movimento della granata
+                        
                         exit(EXIT_SUCCESS);
                     }
                 
-                    // Lancio della granata a destra
+                    // Granata a destra
                     if (fork() == 0) {
                         Entity grenade_right;
                         createBullet(&grenade_right, payload.x + 1, payload.y, 1, 1); // Granata a destra
                         grenade_right.pid = getpid();
                         bulletProcess(&grenade_right, fileds); // Gestisce il movimento della granata
+                        
                         exit(EXIT_SUCCESS);
                     }
                     break;

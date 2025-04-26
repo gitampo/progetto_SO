@@ -12,8 +12,6 @@
 #include "collision.h"
 #include "bullet.h"
 
-//ciao
-
 int main() {
     initscr();
     cbreak();
@@ -109,16 +107,6 @@ int main() {
         }
     }
     
-    
-
-    pid_t pid_grenades[totalGrenades];
-    int i_grenades = 0;
-    Entity grenades[totalGrenades];
-    for (int i = 0; i < totalGrenades; i++) {
-        grenades[i].type = OBJECT_GRENADE;
-        grenades[i].inGioco = 0;
-    }
-
   
     // Inizializzazione dell'array per i bullet
     Entity bullets[MAX_BULLETS];  // Usa MAX_BULLETS invece di MAX_PROJECTILES
@@ -156,35 +144,7 @@ int main() {
                     crocs[temp.id].y = temp.y;
                     crocs[temp.id].x = temp.x;
                 }
-            } else if (temp.type == CREATE_GRENADE) {
-                for (int i = 0; i < 2; i++) {
-                    pid_grenades[i_grenades] = fork();
-                    if (pid_grenades[i_grenades] == -1) {
-                        perror("Errore fork granata");
-                        endwin();
-                        exit(EXIT_FAILURE);
-                    } else if (pid_grenades[i_grenades] == 0) {
-                        close(fileds[0]);
-                        grenades[i_grenades].type = OBJECT_GRENADE;
-                        grenades[i_grenades].id = i_grenades;
-                        grenades[i_grenades].inGioco = 1;
-                        grenades[i_grenades].x = temp.x + (i * 2 - 1) * (FROG_WIDTH / 2);
-                        grenades[i_grenades].y = temp.y;
-                        grenades[i_grenades].direction = i * 2 - 1;
-                        grenades[i_grenades].speed = 1;
-                        // Passa la pipe intera anziché fileds[1]
-                        grenadeProcess(&grenades[i_grenades], fileds);
-                        exit(EXIT_SUCCESS);
-                    }
-                    i_grenades = (i_grenades + 1) % totalGrenades;
-                }
-            } else if (temp.type == OBJECT_GRENADE) {
-                grenades[temp.id].y = temp.y;
-                grenades[temp.id].x = temp.x;
-                if (temp.x < startCol || temp.x > endCol) {
-                    kill(pid_grenades[temp.id], SIGKILL);
-                    grenades[temp.id].inGioco = 0;
-                }
+            
             } else if (temp.type == OBJECT_BULLET) {  // Usa OBJECT_BULLET invece di OBJECT_PROJECTILE
                 // Gestione dei bullet: aggiorna o inserisce nell'array bullets
                 int found = -1;
@@ -271,12 +231,7 @@ int main() {
         drawFrog(&frog);
         drawTane(taneOccupate);
 
-        // Disegno delle granate
-        for (int i = 0; i < totalGrenades; i++) {
-            if (grenades[i].inGioco) {
-                drawGrenade(grenades[i].y, grenades[i].x);
-            }
-        }
+       
 
         // Disegno dei bullet
         for (int i = 0; i < MAX_BULLETS; i++) {  // Usa MAX_BULLETS
