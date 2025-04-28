@@ -3,24 +3,20 @@
 
 #include <sys/types.h>
 
-
 typedef enum {
     OBJECT_FROG,
     OBJECT_CROCODILE,
-    CREATE_GRENADE,
-    OBJECT_GRENADE,
     OBJECT_BULLET,
+    OBJECT_GRENADE,  // Aggiungi questo tipo per la granata
 } ObjectType;
-
-
 
 #define FUORI -1000  // Valore speciale per indicare che l'oggetto è fuori
 
 typedef struct {
-    int attached;
-    int attached_crocodile_id;
     int id;
     ObjectType type;
+    int attached; // 1 se la rana è attaccata a un coccodrillo, 0 altrimenti
+    int attached_crocodile_id; // ID del coccodrillo a cui è attaccato
     int x;
     int y;
     int direction;

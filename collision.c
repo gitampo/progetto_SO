@@ -41,4 +41,3 @@ bool collision(Entity frog, Entity tana){
 }
 
 
-

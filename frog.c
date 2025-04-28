@@ -31,11 +31,11 @@ void frogProcess(Entity *frog, int fileds[2], int toFrog[2]) {
     Entity temp;
     
     while (1) {
-        Entity payload = *frog;  // sempre inizializza il payload aggiornato
+        Entity payload = *frog; // Inizializza il payload con i dati della rana
 
         if (read(toFrog[0], &temp, sizeof(Entity)) > 0) {
-            *frog = temp;
-            payload = *frog;
+            *frog = temp; // Aggiorna la rana con i dati ricevuti
+            payload = *frog; // Invia la rana aggiornata al processo padre
         }
 
         int ch = getch();
@@ -46,69 +46,72 @@ void frogProcess(Entity *frog, int fileds[2], int toFrog[2]) {
                         frog->y -= FROG_HEIGHT;
                     else
                     frog->y = validY_min;
-                    frog->attached = 0;
-                    frog->attached_crocodile_id = -1;
+                    frog->attached = 0; // Non è più attaccato a un coccodrillo
+                    frog->attached_crocodile_id = -1; // Reset ID coccodrillo
                     payload = *frog;
                     break;
                 case KEY_DOWN:
                     if (frog->y + FROG_HEIGHT <= validY_max)
                         frog->y += FROG_HEIGHT;
                     else
-                        frog->y = validY_max;
-                    frog->attached = 0;
-                    frog->attached_crocodile_id = -1;
+                    frog->y = validY_max;
                     payload = *frog;
+                    frog->attached = 0; // Non è più attaccato a un coccodrillo
+                    frog->attached_crocodile_id = -1; // Reset ID coccodrillo
                     break;
                 case KEY_LEFT:
                     if (frog->x - FROG_WIDTH >= validX_min)
                         frog->x -= FROG_WIDTH;
                     else
-                        frog->x = validX_min;
-                    frog->attached = 0;
-                    frog->attached_crocodile_id = -1;
+                    frog->x = validX_min;
+                    frog->attached = 0; // Non è più attaccato a un coccodrillo
+                    frog->attached_crocodile_id = -1; // Reset ID coccodrillo
                     payload = *frog;
                     break;
                 case KEY_RIGHT:
                     if (frog->x + FROG_WIDTH <= validX_max)
                         frog->x += FROG_WIDTH;
                     else
-                        frog->x = validX_max;
-                    frog->attached = 0;
-                    frog->attached_crocodile_id = -1;
+                    frog->x = validX_max;
+                    frog->attached = 0; // Non è più attaccato a un coccodrillo
+                    frog->attached_crocodile_id = -1; // Reset ID coccodrillo
                     payload = *frog;
                     break;
                 case ' ':
-                    payload.type = CREATE_GRENADE;
-                    payload.x = frog->x;
-                    payload.y = frog->y;
+                    // Granata a sinistra
+                    payload.type = OBJECT_GRENADE;
+                    payload.x = frog->x;  // Posizione centrale della rana
+                    payload.y = frog->y;  // Posizione sopra la rana
 
-                    frog->attached = 0;
-                    frog->attached_crocodile_id = -1;
+                    frog->attached = 0; // Non è più attaccato a un coccodrillo
+                    frog->attached_crocodile_id = -1; // Reset ID coccodrillo
                     
+                    // Granata a sinistra
                     if (fork() == 0) {
                         Entity grenade_left;
                         createBullet(&grenade_left, payload.x - 1, payload.y, -1, 1);
                         grenade_left.pid = getpid();
-                        bulletProcess(&grenade_left, fileds);
+                        bulletProcess(&grenade_left, fileds); // Gestisce il movimento della granata
+                        
                         exit(EXIT_SUCCESS);
                     }
-        
+                
+                    // Granata a destra
                     if (fork() == 0) {
                         Entity grenade_right;
                         createBullet(&grenade_right, payload.x + 1, payload.y, 1, 1);
                         grenade_right.pid = getpid();
-                        bulletProcess(&grenade_right, fileds);
+                        bulletProcess(&grenade_right, fileds); // Gestisce il movimento della granata
+                        
                         exit(EXIT_SUCCESS);
                     }
                     break;
             }
         }
 
-        // Invia il payload SOLO se la rana NON è attaccata
-        if (!frog->attached) {
+        if(!frog->attached){
             write(fileds[1], &payload, sizeof(Entity));
         }
-
         usleep(100000);
     }
 }
