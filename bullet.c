@@ -8,21 +8,16 @@
 #include "bullet.h"
 #include "collision.h"
 #include "frog.h"
+#include <fcntl.h>
+#include <string.h>
 
 #define PROJECTILE_SPEED 5
 
 // Il bullet si muove in orizzontale e viene disegnato come un '*'.
 // Quando esce dallo schermo, il processo termina.
-#include <signal.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include "entity.h"
-#include "graphics.h"
-#include <ncurses.h>
-#include <string.h>
 
-void bulletProcess(Entity *bullet, int pipeFD) {
+
+void bulletProcess(Entity *bullet, int fileds[2]) {
     int startCol = (COLS - PAVEMENT_WIDTH) / 2;
     int endCol = startCol + PAVEMENT_WIDTH;
 
@@ -32,21 +27,21 @@ void bulletProcess(Entity *bullet, int pipeFD) {
         // Verifica se il bullet ha superato il fiume (endCol)
         if (bullet->x >= endCol || bullet->x < startCol) {
             bullet->inGioco = 0;  // Imposta lo stato del proiettile come inattivo
-            write(pipeFD, bullet, sizeof(Entity));  // Invia al padre per rimuovere il bullet
+            write(fileds[1], bullet, sizeof(Entity));  // Invia al padre per rimuovere il bullet
 
-            close(pipeFD);
+            close(fileds[1]);  // Chiudi la pipe
 
             // Controllo che il pid esista prima di tentare di terminare il processo
             if (bullet->pid > 0) {
                 kill(bullet->pid, SIGTERM);  // Termina il processo figlio
-                waitpid(bullet->pid, NULL, WNOHANG);  // Non bloccare l'esecuzione
+                waitpid(bullet->pid, NULL, _NOCHANGE);  // Non bloccare l'esecuzione
             }
 
             _exit(0);  // Termina il processo figlio
         }
 
         // Scrivi la posizione aggiornata del bullet sulla pipe
-        write(pipeFD, bullet, sizeof(Entity));
+        write(fileds[1], bullet, sizeof(Entity));
         usleep(80000);  // Delay per il movimento
     }
 }
@@ -85,4 +80,12 @@ int isBulletInGame(Entity *bullet) {
 // Funzione per controllare se il bullet è uscito dallo schermo
 int isBulletOutOfScreen(Entity *bullet) {
     return bullet->x < 0 || bullet->x >= COLS;
+}
+
+void grenadeProcess(Entity *grenade, int fileds[2]) {
+    while (1) {
+        grenade->x += grenade->direction * grenade->speed; // Muovi la granata
+        usleep(100000); // Aspetta 0.1 secondi
+        write(fileds[1], grenade, sizeof(Entity)); // Invia la posizione della granata al padre
+    }
 }

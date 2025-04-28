@@ -17,6 +17,8 @@ typedef enum {
 #define FUORI -1000  // Valore speciale per indicare che l'oggetto è fuori
 
 typedef struct {
+    int attached;
+    int attached_crocodile_id;
     int id;
     ObjectType type;
     int x;

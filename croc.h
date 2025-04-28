@@ -16,6 +16,6 @@
 void creaCrocodiles(Entity crocs[], int startCol, int endCol, int riverStartRow);
 
 // Funzione per gestire il movimento di un singolo Coccodrillo (da eseguire in un processo figlio)
-void crocProcess(Entity *croc, int pipeFD);
+void crocProcess(Entity *croc, int fileds);
 
 #endif // CROC_H

@@ -29,7 +29,7 @@ void creaCrocodiles(Entity crocs[], int startCol, int endCol, int riverStartRow)
     }
 }
 
-void crocProcess(Entity *croc, int pipeFD) {
+void crocProcess(Entity *croc, int fileds) {
     int startCol = (COLS - PAVEMENT_WIDTH) / 2;
     int endCol = startCol + PAVEMENT_WIDTH;
     int riverStart = LINES - 27; // dove inizia il fiume, come in drawRiver()
@@ -48,7 +48,7 @@ void crocProcess(Entity *croc, int pipeFD) {
         }
 
         // Invia la posizione aggiornata del coccodrillo al padre tramite la pipe
-        write(pipeFD, croc, sizeof(Entity));
+        write(fileds, croc, sizeof(Entity));
         
         // Possibilità di sparare un bullet: condizione casuale (circa 1% per iterazione)
         if (croc->inGioco && (rand() % 1000) < 10) {
@@ -63,7 +63,7 @@ void crocProcess(Entity *croc, int pipeFD) {
             pid_t pid_bullet = fork();
             if (pid_bullet == 0) {
                 // Processo figlio: gestisce il movimento del bullet
-                bulletProcess(&bullet, pipeFD);
+                bulletProcess(&bullet, fileds); // Passa la pipe intera
                 exit(EXIT_SUCCESS);  // Termina il processo figlio
             }
         }

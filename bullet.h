@@ -6,13 +6,15 @@
 #define MAX_BULLETS 100  // Usa un nome coerente con "bullet" al posto di "projectile"
 
 // Dichiarazione delle funzioni
-void bulletProcess(Entity *bullet, int pipeFD);  // Funzione per gestire il movimento del bullet
+void bulletProcess(Entity *bullet, int fileds[2]);  // Funzione per gestire il movimento del bullet
 
 // Funzione per creare un bullet
 void createBullet(Entity *bullet, int x, int y, int direction, int isGrenade);
 
 // Funzione per disegnare il bullet
 void drawBullet(Entity *bullet);
+
+void grenadeProcess(Entity *grenade, int fileds[2]);
 
 // Funzione per gestire la collisione tra il bullet e la rana
 int collisionBullet(Entity *bullet, Entity *frog);

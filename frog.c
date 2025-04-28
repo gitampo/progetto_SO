@@ -31,21 +31,23 @@ void frogProcess(Entity *frog, int fileds[2], int toFrog[2]) {
     Entity temp;
     
     while (1) {
-        int ch = getch();
-        Entity payload;
+        Entity payload = *frog;  // sempre inizializza il payload aggiornato
 
         if (read(toFrog[0], &temp, sizeof(Entity)) > 0) {
-            frog->y = temp.y;
-            frog->x = temp.x;
+            *frog = temp;
+            payload = *frog;
         }
 
+        int ch = getch();
         if (ch != ERR) {
             switch(ch) {
                 case KEY_UP:
                     if (frog->y - FROG_HEIGHT >= validY_min)
                         frog->y -= FROG_HEIGHT;
                     else
-                        frog->y = validY_min;
+                    frog->y = validY_min;
+                    frog->attached = 0;
+                    frog->attached_crocodile_id = -1;
                     payload = *frog;
                     break;
                 case KEY_DOWN:
@@ -53,6 +55,8 @@ void frogProcess(Entity *frog, int fileds[2], int toFrog[2]) {
                         frog->y += FROG_HEIGHT;
                     else
                         frog->y = validY_max;
+                    frog->attached = 0;
+                    frog->attached_crocodile_id = -1;
                     payload = *frog;
                     break;
                 case KEY_LEFT:
@@ -60,6 +64,8 @@ void frogProcess(Entity *frog, int fileds[2], int toFrog[2]) {
                         frog->x -= FROG_WIDTH;
                     else
                         frog->x = validX_min;
+                    frog->attached = 0;
+                    frog->attached_crocodile_id = -1;
                     payload = *frog;
                     break;
                 case KEY_RIGHT:
@@ -67,35 +73,44 @@ void frogProcess(Entity *frog, int fileds[2], int toFrog[2]) {
                         frog->x += FROG_WIDTH;
                     else
                         frog->x = validX_max;
+                    frog->attached = 0;
+                    frog->attached_crocodile_id = -1;
                     payload = *frog;
                     break;
-                    case ' ':
+                case ' ':
                     payload.type = CREATE_GRENADE;
-                    payload.x = frog->x; // Posizione centrale della rana
-                    payload.y = frog->y; // Posizione sopra la rana
-                
-                    // Lancio della granata a sinistra
+                    payload.x = frog->x;
+                    payload.y = frog->y;
+
+                    frog->attached = 0;
+                    frog->attached_crocodile_id = -1;
+                    
                     if (fork() == 0) {
                         Entity grenade_left;
-                        createBullet(&grenade_left, payload.x - 1, payload.y, -1, 1); // Granata a sinistra
+                        createBullet(&grenade_left, payload.x - 1, payload.y, -1, 1);
                         grenade_left.pid = getpid();
-                        bulletProcess(&grenade_left, fileds); // Gestisce il movimento della granata
+                        bulletProcess(&grenade_left, fileds);
                         exit(EXIT_SUCCESS);
                     }
-                
-                    // Lancio della granata a destra
+        
                     if (fork() == 0) {
                         Entity grenade_right;
-                        createBullet(&grenade_right, payload.x + 1, payload.y, 1, 1); // Granata a destra
+                        createBullet(&grenade_right, payload.x + 1, payload.y, 1, 1);
                         grenade_right.pid = getpid();
-                        bulletProcess(&grenade_right, fileds); // Gestisce il movimento della granata
+                        bulletProcess(&grenade_right, fileds);
                         exit(EXIT_SUCCESS);
                     }
                     break;
             }
         }
 
-        write(fileds[1], &payload, sizeof(Entity));
+        // Invia il payload SOLO se la rana NON è attaccata
+        if (!frog->attached) {
+            write(fileds[1], &payload, sizeof(Entity));
+        }
+
         usleep(100000);
     }
 }
+
+
