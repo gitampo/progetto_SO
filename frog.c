@@ -29,21 +29,19 @@ void frogProcess(Entity *frog, int fileds[2], int toFrog[2]) {
     int validY_min = LINES - 33;              
     int validY_max = LINES - FROG_HEIGHT;       
     Entity temp;
-    
+    nodelay(stdscr, TRUE);
     while (1) {
+        int ch = getch();
         Entity payload = *frog; // Inizializza il payload con i dati della rana
 
-        if (read(toFrog[0], &temp, sizeof(Entity)) > 0) {
-            *frog = temp; // Aggiorna la rana con i dati ricevuti
-            payload = *frog; // Invia la rana aggiornata al processo padre
-        }
+       
 
-        int ch = getch();
         if (ch != ERR) {
             switch(ch) {
                 case KEY_UP:
                     if (frog->y - FROG_HEIGHT >= validY_min)
                         frog->y -= FROG_HEIGHT;
+
                     else
                     frog->y = validY_min;
                     frog->attached = 0; // Non è più attaccato a un coccodrillo
@@ -89,7 +87,7 @@ void frogProcess(Entity *frog, int fileds[2], int toFrog[2]) {
                     // Granata a sinistra
                     if (fork() == 0) {
                         Entity grenade_left;
-                        createBullet(&grenade_left, payload.x - 1, payload.y, -1, 1);
+                        createBullet(&grenade_left, payload.x - 1, payload.y, -1, 1); // Granata a sinistra
                         grenade_left.pid = getpid();
                         bulletProcess(&grenade_left, fileds); // Gestisce il movimento della granata
                         
@@ -99,7 +97,7 @@ void frogProcess(Entity *frog, int fileds[2], int toFrog[2]) {
                     // Granata a destra
                     if (fork() == 0) {
                         Entity grenade_right;
-                        createBullet(&grenade_right, payload.x + 1, payload.y, 1, 1);
+                        createBullet(&grenade_right, payload.x + 1, payload.y, 1, 1); // Granata a destra
                         grenade_right.pid = getpid();
                         bulletProcess(&grenade_right, fileds); // Gestisce il movimento della granata
                         
@@ -108,12 +106,12 @@ void frogProcess(Entity *frog, int fileds[2], int toFrog[2]) {
                     break;
             }
         }
-
-        if(!frog->attached){
+        if (read(toFrog[0], &temp, sizeof(Entity)) > 0) {
+            *frog = temp; // Aggiorna la rana con i dati ricevuti
+            payload = *frog; // Invia la rana aggiornata al processo padre
+         }
             write(fileds[1], &payload, sizeof(Entity));
-        }
+        
         usleep(100000);
     }
 }
-
-

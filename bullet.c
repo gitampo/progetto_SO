@@ -22,9 +22,8 @@ void bulletProcess(Entity *bullet, int fileds[2]) {
     int endCol = startCol + PAVEMENT_WIDTH;
 
     while (1) {
-       bullet->x += bullet->direction * bullet->speed;  // Muovi la granata
-        //bullet->x += bullet->direction;  // Muovi la granata
-        // Verifica se la granata ha superato il fiume (endCol)
+        bullet->x += bullet->direction * bullet->speed;
+        
         if (bullet->x >= endCol || bullet->x < startCol) {
             bullet->inGioco = 0;  // Imposta lo stato della granata come inattiva
             write(fileds[1], bullet, sizeof(Entity));  // Invia al padre per rimuovere la granata
