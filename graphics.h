@@ -20,14 +20,13 @@
 #define SYMBOL_TANA_3 "|      |"
 
 // Funzioni di disegno
+
 void drawPavement();
 void drawRiver();
 void drawMiddlePavement();
-void drawGrenade(int grenadeX, int grenadeY);
 void drawVoid();
 void drawTane(int statusTane[NUM_TANE]);
-// Dichiarazione della funzione per disegnare un bullet
-void drawBullet(Entity *bullet);  // Aggiungi questa dichiarazione
-void drawGrenade(int y, int x);
+void drawBullet(Entity *bullet);  
+void drawGrenade(Entity *grenade);  
 
 #endif // GRAPHICS_H

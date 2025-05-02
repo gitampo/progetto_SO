@@ -10,9 +10,27 @@ extern int taneOccupate[NUM_TANE];  // Permette a frog.c di usare la variabile
  
 void drawFrog(const Entity *frog) { 
     attron(COLOR_PAIR(1));
+    /*
     mvprintw(frog->y,     frog->x, SYMBOL_FROG_1); 
     mvprintw(frog->y + 1, frog->x, SYMBOL_FROG_2); 
     mvprintw(frog->y + 2, frog->x, SYMBOL_FROG_3); 
+    */
+
+    for (int col = 0; col < FROG_WIDTH; col++) {
+        if (frog->x + col >= ((COLS - PAVEMENT_WIDTH) / 2) &&
+            frog->x + col < ((COLS - PAVEMENT_WIDTH) / 2) + PAVEMENT_WIDTH)
+            mvprintw(frog->y, frog->x + col, "%c", SYMBOL_FROG_1[col]);
+    }
+    for (int col = 0; col < FROG_WIDTH; col++) {
+        if (frog->x + col >= ((COLS - PAVEMENT_WIDTH) / 2) &&
+            frog->x + col < ((COLS - PAVEMENT_WIDTH) / 2) + PAVEMENT_WIDTH)
+            mvprintw(frog->y + 1, frog->x + col, "%c", SYMBOL_FROG_2[col]);
+    }
+    for (int col = 0; col < FROG_WIDTH; col++) {
+        if (frog->x + col >= ((COLS - PAVEMENT_WIDTH) / 2) &&
+            frog->x + col < ((COLS - PAVEMENT_WIDTH) / 2) + PAVEMENT_WIDTH)
+            mvprintw(frog->y + 2, frog->x + col, "%c", SYMBOL_FROG_3[col]);
+    }
     attroff(COLOR_PAIR(1));
 } 
  
@@ -29,14 +47,26 @@ void frogProcess(Entity *frog, int fileds[2], int toFrog[2]) {
     int validY_min = LINES - 33;              
     int validY_max = LINES - FROG_HEIGHT;       
     Entity temp;
-    nodelay(stdscr, TRUE);
+    Entity payload = *frog; // Inizializza il payload con i dati della rana
+    int onCroc = 0;
+
     while (1) {
-        int ch = getch();
-        Entity payload = *frog; // Inizializza il payload con i dati della rana
-
+        int update = 1;
        
-
-        if (ch != ERR) {
+        
+        if (read(toFrog[0], &temp, sizeof(Entity)) > 0) {
+            if (temp.type == FROG_ON_CROCODILE) {
+                frog->x = temp.x; // La rana si posiziona sopra il coccodrillo
+                onCroc = 1; // La rana è attaccata a un coccodrillo
+                payload = *frog; // Invia la rana aggiornata al processo padre
+            }
+        } 
+        
+        // Assicurati che il tipo sia sempre OBJECT_FROG
+        
+        int ch = getch();
+       
+        //if (ch != ERR) {
             switch(ch) {
                 case KEY_UP:
                     if (frog->y - FROG_HEIGHT >= validY_min)
@@ -77,41 +107,32 @@ void frogProcess(Entity *frog, int fileds[2], int toFrog[2]) {
                     break;
                 case ' ':
                     // Granata a sinistra
-                    payload.type = OBJECT_GRENADE;
+                    payload.type = CREATE_GRENADE;
                     payload.x = frog->x;  // Posizione centrale della rana
-                    payload.y = frog->y;  // Posizione sopra la rana
-
-                    frog->attached = 0; // Non è più attaccato a un coccodrillo
-                    frog->attached_crocodile_id = -1; // Reset ID coccodrillo
-                    
-                    // Granata a sinistra
-                    if (fork() == 0) {
-                        Entity grenade_left;
-                        createBullet(&grenade_left, payload.x - 1, payload.y, -1, 1); // Granata a sinistra
-                        grenade_left.pid = getpid();
-                        bulletProcess(&grenade_left, fileds); // Gestisce il movimento della granata
-                        
-                        exit(EXIT_SUCCESS);
-                    }
-                
-                    // Granata a destra
-                    if (fork() == 0) {
-                        Entity grenade_right;
-                        createBullet(&grenade_right, payload.x + 1, payload.y, 1, 1); // Granata a destra
-                        grenade_right.pid = getpid();
-                        bulletProcess(&grenade_right, fileds); // Gestisce il movimento della granata
-                        
-                        exit(EXIT_SUCCESS);
-                    }
+                    payload.y = frog->y + FROG_HEIGHT / 2;  // Posizione sopra la rana
+                   
+                    break;
+                default:
+                    update = 0; // Mantieni la posizione corrente della rana
                     break;
             }
-        }
-        if (read(toFrog[0], &temp, sizeof(Entity)) > 0) {
-            *frog = temp; // Aggiorna la rana con i dati ricevuti
-            payload = *frog; // Invia la rana aggiornata al processo padre
-         }
+       // }
+
+        if (update || onCroc) {
             write(fileds[1], &payload, sizeof(Entity));
+            onCroc = 0; // Reset dello stato di attacco
+        }
+   
+        if (frog ->y == validY_min) {
+            // La rana ha raggiunto la tana
+            
+            frog->x = (COLS - FROG_WIDTH) / 2;
+            frog->y = LINES - FROG_HEIGHT;
+            payload = *frog; // Invia la rana aggiornata al processo padre
+            write(fileds[1], &payload, sizeof(Entity));
+        }
         
-        usleep(100000);
+
+        //usleep(2000); // Aspetta un po' prima di ridisegnare
     }
 }

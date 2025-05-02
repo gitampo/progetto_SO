@@ -19,12 +19,18 @@ int isFrogInTana(const Entity *frog) {
     if (frog->y == taneRow) { // Controlla se la rana è sulla riga delle tane
         for (int i = 0; i < NUM_TANE; i++) {
             int tanaStartCol = startCol + i * slotWidth + ((slotWidth - LARGHEZZA_TANA) / 2);
+            if (
+            inBetween(frog->x, tanaStartCol, tanaStartCol + LARGHEZZA_TANA - 1) ||
+            inBetween(frog->x + FROG_WIDTH - 1, tanaStartCol, tanaStartCol + LARGHEZZA_TANA - 1)
+        ) return i;
+            /*
             if (frog->x >= tanaStartCol && frog->x < tanaStartCol + LARGHEZZA_TANA) {
                 return i; // Restituisce l'indice della tana
             }   
             if(frog->x + FROG_WIDTH >= tanaStartCol && frog->x + FROG_WIDTH < tanaStartCol + LARGHEZZA_TANA) {
                 return i; // Restituisce l'indice della tana
             }
+                */
         }
     }
     return -1;  // Nessuna tana trovata

@@ -1,7 +1,10 @@
 #include "graphics.h"
 #include <ncurses.h>
 
+
 int taneOccupate[NUM_TANE] = {0};  // 0 = libera, 1 = occupata
+
+
 
 
 // Disegna il marciapiede centrato in basso (già esistente)
@@ -59,23 +62,21 @@ void drawTane(int statusTane[NUM_TANE]) {
     
     for (int i = 0; i < NUM_TANE; i++) {
         int tanaStartCol = startCol + i * (int)slotWidth + (((int)slotWidth - LARGHEZZA_TANA) / 2);
-        for (int j = 0; j < LARGHEZZA_TANA; j++) {
             if (statusTane[i]) {
                 attron(COLOR_PAIR(3));
-                mvaddch(taneRow, tanaStartCol + j, ' ');
-                mvaddch(taneRow + 1, tanaStartCol + j, ' ');
-                mvaddch(taneRow + 2, tanaStartCol + j, ' ');
+                mvprintw(taneRow, tanaStartCol, "        ");
+                mvprintw(taneRow + 1, tanaStartCol, "        ");
+                mvprintw(taneRow + 2, tanaStartCol, "        ");
                 attroff(COLOR_PAIR(3));
             } else {
                 attron(COLOR_PAIR(5));
                 // Stampa un singolo carattere per ogni riga della sprite della tana
-                mvaddch(taneRow, tanaStartCol + j, SYMBOL_TANA_1[j]);
-                mvaddch(taneRow + 1, tanaStartCol + j, SYMBOL_TANA_2[j]);
-                mvaddch(taneRow + 2, tanaStartCol + j, SYMBOL_TANA_3[j]);
+                mvprintw(taneRow, tanaStartCol, "%s", SYMBOL_TANA_1);
+                mvprintw(taneRow + 1, tanaStartCol, "%s", SYMBOL_TANA_2);
+                mvprintw(taneRow + 2, tanaStartCol, "%s", SYMBOL_TANA_3);
                 attroff(COLOR_PAIR(5));
             }
-        }
-    }   
+    }
 }
 
 void drawVoid() {
@@ -96,12 +97,14 @@ void drawVoid() {
 // Funzione per disegnare un bullet
 void drawBullet(Entity *bullet) {
     if (bullet->inGioco) {
-        mvaddch(bullet->y, bullet->x, '*');  // Disegna il bullet con un simbolo
+        attron(COLOR_PAIR(7));  // Usa un colore visibile
+        mvaddch(bullet->y, bullet->x, '*');
+        attroff(COLOR_PAIR(7));
     }
 }
 
-void drawGrenade(int y, int x) {
+void drawGrenade(Entity *grenade) {
     attron(COLOR_PAIR(7));
-    mvprintw(y, x, "O"); // Disegna la granata come "O"
+    mvprintw(grenade->y, grenade->x, grenade->direction ==-1 ? "<" : ">"); 
     attroff(COLOR_PAIR(7));
 }

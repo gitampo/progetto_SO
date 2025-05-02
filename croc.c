@@ -8,6 +8,22 @@
 #include "bullet.h"
 
 
+// Disegna un coccodrillo
+void drawCrocodiles(const Entity crocs[], int totalCrocs ) {
+    attron(COLOR_PAIR(4));
+    for (int i = 0; i < totalCrocs; i++) {
+        if (!crocs[i].inGioco) continue;
+        for (int row = 0; row < CROC_HEIGHT; row++) {
+            for (int col = 0; col < CROC_WIDTH; col++) {
+                if (crocs[i].x + col >= ((COLS - PAVEMENT_WIDTH) / 2) &&
+                    crocs[i].x + col < ((COLS - PAVEMENT_WIDTH) / 2) + PAVEMENT_WIDTH)
+                    mvprintw(crocs[i].y + row, crocs[i].x + col, "%c", SPRITE_CROC);
+            }
+        }
+    }
+    attroff(COLOR_PAIR(4));
+}
+
 
 void creaCrocodiles(Entity crocs[], int startCol, int endCol, int riverStartRow) {
     int index = 0;
@@ -29,59 +45,54 @@ void creaCrocodiles(Entity crocs[], int startCol, int endCol, int riverStartRow)
     }
 }
 
-void crocProcess(Entity *croc, int fileds) {
+void crocProcess(Entity *croc, int fileds, int riverStart) {
     int startCol = (COLS - PAVEMENT_WIDTH) / 2;
     int endCol = startCol + PAVEMENT_WIDTH;
-    int riverStart = LINES - 27; // dove inizia il fiume, come in drawRiver()
     
     int local_proj_counter = 0;
 
+     // Calcola il ritardo in base alla corsia
+    int lane = (croc->y - riverStart) / CROC_HEIGHT;
+    croc->speed = 1; // (int) ((16 - lane) / .2f + .5f);
+
     while (1) {
-        if (croc->inGioco) {
             // Aggiorna la posizione del coccodrillo
-            croc->x += croc->direction;
-            if (croc->x < (startCol - CROC_WIDTH)) {
-                croc->x = endCol;
-            } else if (croc->x > endCol) {
-                croc->x = startCol - CROC_WIDTH;
-            }
+        croc->x += croc->direction * croc->speed; // Velocità in base alla corsia
+        if (croc->x < (startCol - CROC_WIDTH)) {
+            croc->x = endCol;
+        } else if (croc->x > endCol) {
+            croc->x = startCol - CROC_WIDTH;
         }
 
         // Invia la posizione aggiornata del coccodrillo al padre tramite la pipe
         write(fileds, croc, sizeof(Entity));
         
         // Possibilità di sparare un bullet: condizione casuale (circa 1% per iterazione)
-        if (croc->inGioco && (rand() % 1000) < 10) {
+        if ((croc->direction == 1 && croc->x + CROC_WIDTH < endCol ||
+            croc->direction == -1 && croc->x > startCol) && rand() % 1000 < 10) {
             Entity bullet;
             int offsetX = (croc->direction == 1) ? CROC_WIDTH : -1;
             int bulletStartX = croc->x + offsetX;
             int bulletStartY = croc->y + (CROC_HEIGHT / 2);
-            bullet.id = croc->id * 1000 + local_proj_counter++; // Un ID univoco per il bullet
-            bullet.type = OBJECT_BULLET;
-            createBullet(&bullet, bulletStartX, bulletStartY, croc->direction, 0); // Non è una granata
-            
+            bullet.type = CREATE_BULLET;
+            bullet.x = bulletStartX;
+            bullet.y = bulletStartY;
+            bullet.direction = croc->direction;
+            bullet.inGioco = 1;
+            bullet.speed = 2; // Velocità del proiettile
+            write(fileds, &bullet, sizeof(Entity)); // Invia il bullet al processo padre
+            // createBullet(&bullet, bulletStartX, bulletStartY, croc->direction, 0); // Non è una granata
+            /*
             pid_t pid_bullet = fork();
             if (pid_bullet == 0) {
                 // Processo figlio: gestisce il movimento del bullet
                 bulletProcess(&bullet, fileds); // Passa la pipe intera
                 exit(EXIT_SUCCESS);  // Termina il processo figlio
             }
+            */
         }
-        
-        // Calcola il ritardo in base alla corsia
-        int lane = (croc->y - riverStart) / CROC_HEIGHT;
-        int delay;
-        switch (lane) {
-            case 0: delay = 500000; break;
-            case 1: delay = 400000; break;
-            case 2: delay = 350000; break;
-            case 3: delay = 300000; break;
-            case 4: delay = 250000; break;
-            case 5: delay = 200000; break;
-            case 6: delay = 150000; break;
-            case 7: delay = 100000; break;
-            default: delay = 400000; break;
-        }
-        usleep(delay);
+
+        usleep(100000);
+
     }
 }

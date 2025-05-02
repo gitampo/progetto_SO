@@ -16,38 +16,27 @@
 // Il bullet si muove in orizzontale e viene disegnato come un '*'.
 // Quando esce dallo schermo, il processo termina.
 
-
-void bulletProcess(Entity *bullet, int fileds[2]) {
+void bulletProcess(Entity *bullet, int pipeFD) {
     int startCol = (COLS - PAVEMENT_WIDTH) / 2;
     int endCol = startCol + PAVEMENT_WIDTH;
 
+    int stop_update = 0; // Flag per fermare l'aggiornamento della posizione
+
     while (1) {
         bullet->x += bullet->direction * bullet->speed;
-        
-        if (bullet->x >= endCol || bullet->x < startCol) {
-            bullet->inGioco = 0;  // Imposta lo stato della granata come inattiva
-            write(fileds[1], bullet, sizeof(Entity));  // Invia al padre per rimuovere la granata
-
-            close(fileds[1]);  // Chiudi la pipe
-
-            // Controllo che il pid esista prima di tentare di terminare il processo
-            if (bullet->pid > 0) {
-                kill(bullet->pid, SIGTERM);  // Termina il processo figlio
-                waitpid(bullet->pid, NULL, _NOCHANGE);  // Non bloccare l'esecuzione
-            }
-
-            _exit(0);  // Termina il processo figlio
+        // Controlla se il proiettile ha superato i bordi
+        if (!stop_update && bullet->x >= endCol || bullet->x < startCol) {
+            bullet->inGioco = 0;
+            stop_update = 1; // Ferma l'aggiornamento della posizione
+            write(pipeFD, bullet, sizeof(Entity));
         }
 
-        // Scrivi la posizione aggiornata della granata sulla pipe
-        write(fileds[1], bullet, sizeof(Entity));
-        usleep(80000);  // Delay per il movimento
+        if (bullet->inGioco)
+            write(pipeFD, bullet, sizeof(Entity));
+        
+        usleep(100000);  // Più veloce dei coccodrilli
     }
 }
-
-
-
-
 
 // Funzione per creare un bullet
 void createBullet(Entity *bullet, int x, int y, int direction, int isGrenade) {
@@ -82,10 +71,24 @@ int isBulletOutOfScreen(Entity *bullet) {
     return bullet->x < 0 || bullet->x >= COLS;
 }
 
-void grenadeProcess(Entity *grenade, int fileds[2]) {
+void grenadeProcess(Entity *grenade, int pipeFD) {
+    int startCol = (COLS - PAVEMENT_WIDTH) / 2;
+    int endCol = startCol + PAVEMENT_WIDTH;
+
+    int stop_update = 0; // Flag per fermare l'aggiornamento della posizione
+
     while (1) {
-        grenade->x += grenade->direction * grenade->speed; // Muovi la granata
-        usleep(100000); // Aspetta 0.1 secondi
-        write(fileds[1], grenade, sizeof(Entity)); // Invia la posizione della granata al padre
+        grenade->x += grenade->direction * grenade->speed;
+        // Controlla se il proiettile ha superato i bordi
+        if (!stop_update && grenade->x >= endCol || grenade->x < startCol) {
+            grenade->inGioco = 0;
+            stop_update = 1; // Ferma l'aggiornamento della posizione
+            write(pipeFD, grenade, sizeof(Entity));
+        }
+
+        if (grenade->inGioco)
+            write(pipeFD, grenade, sizeof(Entity));
+        
+        usleep(100000);  // Più veloce dei coccodrilli
     }
 }

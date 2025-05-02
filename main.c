@@ -47,9 +47,12 @@ int main() {
         endwin();
         exit(EXIT_FAILURE);
     }
+
     int flags = fcntl(fileds[0], F_GETFL, 0);
-    fcntl(fileds[0], F_SETFL, flags | O_NONBLOCK);
-    fcntl(toFrog[0], F_SETFL, flags | O_NONBLOCK);
+    int frogflags = fcntl(toFrog[0], F_GETFL, 0);
+
+    fcntl(fileds[0], F_SETFL, O_NONBLOCK);
+    fcntl(toFrog[0], F_SETFL, O_NONBLOCK);
 
     // Inizializzazione della rana
     int taneOccupate[NUM_TANE] = {0};  // 0 = libera, 1 = occupata
@@ -64,7 +67,7 @@ int main() {
     int validX_max = validX_min + PAVEMENT_WIDTH - FROG_WIDTH;
     int validY_min = LINES - 33;
     int validY_max = LINES - FROG_HEIGHT;
-
+    int frog_on_crocodile = -1;
     
     // Calcola i limiti e inizializza l'area del fiume
     int totalCrocs = LANES * CROCS_PER_LANE; // 16 Coccodrilli totali
@@ -81,6 +84,9 @@ int main() {
         endwin();
         exit(EXIT_FAILURE);
     } else if (pid_frog == 0) {
+        keypad(stdscr, TRUE);
+        nodelay(stdscr, TRUE);
+        timeout(0);
         close(fileds[0]);
         frogProcess(&frog, fileds, toFrog);
         exit(EXIT_SUCCESS);
@@ -96,7 +102,7 @@ int main() {
             exit(EXIT_FAILURE);
         } else if (pid_crocs[i] == 0) {
             close(fileds[0]);  // Ogni processo figlio deve chiudere il lato di lettura
-            crocProcess(&crocs[i], fileds[1]);  // Ogni figlio gestisce un coccodrillo
+            crocProcess(&crocs[i], fileds[1], riverStartRow);  // Ogni figlio gestisce un coccodrillo
             exit(EXIT_SUCCESS);  // Ogni processo figlio termina dopo aver eseguito il proprio lavoro
         }
     }
@@ -104,13 +110,18 @@ int main() {
   
     // Inizializzazione dell'array per i bullet
     Entity bullets[MAX_BULLETS];  // Usa MAX_BULLETS invece di MAX_PROJECTILES
+    pid_t pid_bullets[MAX_BULLETS];  // Array per memorizzare i pid dei proiettili
+    int i_last_bullet = 0; // Indice dell'ultimo proiettile creato
     for (int i = 0; i < MAX_BULLETS; i++) {  // Usa MAX_BULLETS
         bullets[i].inGioco = 0;
     }
 
-    // Chiusura degli estremi non utilizzati nelle pipe
-    close(toFrog[0]);
-    close(fileds[1]);
+    Entity grenades[MAX_GRENADES];  // Usa MAX_BULLETS invece di MAX_PROJECTILES
+    pid_t pid_grenades[MAX_GRENADES];  // Array per memorizzare i pid dei proiettili
+    int i_last_grenades = 0; // Indice dell'ultimo proiettile creato
+    for (int i = 0; i < MAX_GRENADES; i++) {  // Usa MAX_BULLETS
+        grenades[i].inGioco = 0;
+    }
 
     Entity temp;
     while (1) {
@@ -119,86 +130,114 @@ int main() {
                 frog.y = temp.y;
                 frog.x = temp.x;
             } else if (temp.type == OBJECT_CROCODILE) {
-                if (!temp.inGioco) {
-                    if(frog.attached && frog.attached_crocodile_id == temp.id) {
-                        frog.x = temp.x + (CROC_WIDTH / 2) - (FROG_WIDTH / 2); // Non è più attaccato a un coccodrillo
-                        frog.y = temp.y - 1; // Reset ID coccodrillo
-                    }
-                    kill(pid_crocs[temp.id], SIGTERM);
-                    pid_crocs[temp.id] = fork();
-                    if (pid_crocs[temp.id] == -1) {
-                        perror("Errore fork Coccodrillo");
-                        endwin();
-                        exit(EXIT_FAILURE);
-                    } else if (pid_crocs[temp.id] == 0) {
-                        close(fileds[0]);
-                        crocs[temp.id].inGioco = 1;
-                        crocs[temp.id].x = crocs[temp.id].initX;
-                        exit(EXIT_SUCCESS);
-                    }
-                } else {
-                    crocs[temp.id].y = temp.y;
-                    crocs[temp.id].x = temp.x;
+
+                crocs[temp.id].y = temp.y;
+                crocs[temp.id].x = temp.x;
+                if (temp.id == frog_on_crocodile) {
+                    Entity frog_temp = frog;
+                    frog_temp.type = FROG_ON_CROCODILE;
+                    frog_temp.x = crocs[temp.id].x + (CROC_WIDTH / 2) - (FROG_WIDTH / 2); // La rana si posiziona sopra il coccodrillo
+                    write(toFrog[1], &frog_temp, sizeof(Entity));
                 }
             
-            } else if (temp.type == OBJECT_BULLET) {  // Usa OBJECT_BULLET invece di OBJECT_PROJECTILE
-                // Gestione dei bullet: aggiorna o inserisce nell'array bullets
-                int found = -1;
-                for (int i = 0; i < MAX_BULLETS; i++) {  // Usa MAX_BULLETS
-                    if (bullets[i].id == temp.id) {
-                        found = i;
-                        break;
-                    }
-                }
-                if (found != -1) {
-                    bullets[found] = temp;
+            } else if (temp.type == CREATE_BULLET) {
+                // Creazione del proiettile
+                temp.type = OBJECT_BULLET; // Imposta il tipo di proiettile
+                temp.id = i_last_bullet; // Imposta l'ID del proiettile
+                bullets[i_last_bullet] = temp; // Aggiungi il proiettile all'array
+                
+                pid_bullets[i_last_bullet] = fork();
+                if (pid_bullets[i_last_bullet] == -1) {
+                    perror("Errore fork Proiettile");
+                    endwin();
+                    exit(EXIT_FAILURE);
+                } else if (pid_bullets[i_last_bullet] == 0) {
+                    close(fileds[0]);  // Ogni processo figlio deve chiudere il lato di lettura
+                    bulletProcess(&temp, fileds[1]);  // Ogni figlio gestisce un coccodrillo
+                    exit(EXIT_SUCCESS);  // Ogni processo figlio termina dopo aver eseguito il proprio lavoro
+                } 
+                i_last_bullet = (i_last_bullet + 1) % MAX_BULLETS; // Incrementa l'indice dell'ultimo proiettile creato
+            } else if (temp.type == OBJECT_BULLET) {
+                // exit(EXIT_SUCCESS); // Termina il processo figlio del proiettile
+                if (temp.inGioco) {
+                    bullets[temp.id] = temp; // Aggiungi il proiettile all'array
                 } else {
-                    for (int i = 0; i < MAX_BULLETS; i++) {  // Usa MAX_BULLETS
-                        if (bullets[i].inGioco == 0) {
-                            bullets[i] = temp;
-                            break;
-                        }
-                    }
+                    // Rimuovi il proiettile dall'array
+                    bullets[temp.id].inGioco = 0;
+                    kill(pid_bullets[temp.id], SIGTERM);
+                }
+
+              
+            } else if (temp.type == CREATE_GRENADE) {
+                int grenadesx[2] = {temp.x -1, temp.x + FROG_WIDTH};
+                int grenade_direction[2] = { -1, 1}; // Direzione della granata (sinistra e destra)
+                // Creazione della granata
+
+                for (int i = 0; i < 2; i++)
+                {
+                    
+                    temp.id = i_last_grenades; // Imposta l'ID del proiettile
+                    temp.x = grenadesx[i]; // Imposta la posizione della granata
+                    temp.type = OBJECT_GRENADE; // Imposta il tipo di proiettile
+                    temp.inGioco = 1; // Imposta lo stato della granata a "in gioco"
+                    temp.speed = 2; // Imposta la velocità della granata
+                    temp.direction = grenade_direction[i]; // Imposta la direzione della granata
+                    grenades[i_last_grenades] = temp; // Aggiungi il proiettile all'array
+                    
+    
+                    
+                    pid_grenades[i_last_grenades] = fork();
+                    if (pid_grenades[i_last_grenades] == -1) {
+                        perror("Errore fork Granata");
+                        endwin();
+                        exit(EXIT_FAILURE);
+                    } else if (pid_grenades[i_last_grenades] == 0) {
+                        close(fileds[0]);  // Ogni processo figlio deve chiudere il lato di lettura
+                        grenadeProcess(&temp, fileds[1]);  // Ogni figlio gestisce un coccodrillo
+                        exit(EXIT_SUCCESS);  // Ogni processo figlio termina dopo aver eseguito il proprio lavoro
+                    } 
+                    i_last_grenades = (i_last_grenades + 1) % MAX_GRENADES; // Incrementa l'indice dell'ultimo proiettile creato
                 }
             }
-        }
-        int frog_onCrocodile = 0;
-      
-      
+
+            else if (temp.type == OBJECT_GRENADE) {
+                // exit(EXIT_SUCCESS); // Termina il processo figlio del proiettile
+                if (temp.inGioco) {
+                    grenades[temp.id] = temp; // Aggiungi il proiettile all'array
+                } else {
+                    // Rimuovi il proiettile dall'array
+                    grenades[temp.id].inGioco = 0;
+                    kill(pid_grenades[temp.id], SIGTERM);
+                }
+            }
+        } 
       
         for(int i = 0; i < totalCrocs; i++) {
          
-            if(frog.y == crocs[i].y && frog.x + FROG_WIDTH - 1 >= crocs[i].x && frog.x <= crocs[i].x + CROC_WIDTH) {
-                frog_onCrocodile = 1;
-                mvprintw(0,0,"Frog on Crocodile\n");
-                frog.x = crocs[i].x + (CROC_WIDTH / 2) - (FROG_WIDTH / 2); // La rana si posiziona sopra il coccodrillo
-                frog.attached = 1; // La rana è attaccata a un coccodrillo
-                frog.attached_crocodile_id = i; // ID del coccodrillo a cui è attaccato
+            if(
+                (frog.y == crocs[i].y) && 
+                (
+                    (inBetween(frog.x, crocs[i].x, crocs[i].x + CROC_WIDTH) && 
+                    inBetween(frog.x, crocs[i].x, crocs[i].x + CROC_WIDTH)) ||
+                    (inBetween(frog.x + FROG_WIDTH, crocs[i].x, crocs[i].x + CROC_WIDTH) && 
+                    inBetween(frog.x + FROG_WIDTH, crocs[i].x, crocs[i].x + CROC_WIDTH))
+                )
+            ) {
+                frog_on_crocodile = i; // La rana è sopra il coccodrillo
                 break;
+            } else {
+                frog_on_crocodile = -1; // La rana non è sopra nessun coccodrillo
             }
-            if(frog.y == crocs[i].y && frog.x + FROG_WIDTH - 1 < crocs[i].x || frog.x > crocs[i].x + CROC_WIDTH) {
-                frog_onCrocodile = 0; // La rana non è più attaccata a un coccodrillo
-                }
+        
         }
        
-        if(frog_onCrocodile == 0) {
-            frog.attached = 0; // La rana non è più attaccata a un coccodrillo
-            frog.attached_crocodile_id = -1; // Reset ID coccodrillo
-        }
-        if(frog.attached){
-            frog.x = crocs[frog.attached_crocodile_id].x; // La rana si sposta con il coccodrillo
-            frog.y = crocs[frog.attached_crocodile_id].y ; // La rana si sposta con il coccodrillo
-          
-
-        }
+     
 
         // Verifica se la rana è entrata in una tana
         int tanaIndex = isFrogInTana(&frog);
         if (tanaIndex != -1) {
-            taneOccupate[tanaIndex] = 1;
-            frog.x = (COLS - FROG_WIDTH) / 2;
-            frog.y = LINES - FROG_HEIGHT;
-            write(toFrog[1], &frog, sizeof(Entity));
+            taneOccupate[tanaIndex] = 1; 
+            tanaIndex = -1; // Reset dell'indice della tana
         }
 
         // Invece di chiamare clear(), ridisegniamo le aree statiche che "cancellano" le vecchie scritture: 
@@ -213,30 +252,9 @@ int main() {
         // le 5 tane sopra il marciapiede intermedio
 
         // Disegna i Coccodrilli
-        attron(COLOR_PAIR(4));
-        for (int i = 0; i < totalCrocs; i++) {
-            if (!crocs[i].inGioco) continue;
-            for (int row = 0; row < CROC_HEIGHT; row++) {
-                for (int col = 0; col < CROC_WIDTH; col++) {
-                    if (crocs[i].x + col >= ((COLS - PAVEMENT_WIDTH) / 2) &&
-                        crocs[i].x + col < ((COLS - PAVEMENT_WIDTH) / 2) + PAVEMENT_WIDTH)
-                        mvprintw(crocs[i].y + row, crocs[i].x + col, "%c", SPRITE_CROC);
-                }
-            }
-        }
-        attroff(COLOR_PAIR(4));
 
-        for (int i = 0; i < totalCrocs; i++) {
-            if (!crocs[i].inGioco) continue;
-            if (crocs[i].y == frog.y && crocs[i].x == frog.x) {
-                frog_onCrocodile = 1;
-                crocodileSpeed = crocs[i].speed;
-            } else if (crocs[i].y == frog.y && crocs[i].x + FROG_WIDTH >= frog.x && crocs[i].x <= frog.x + FROG_WIDTH) {
-                frog_onCrocodile = 1;
-                crocodileSpeed = crocs[i].speed;
-            }  
-        }
-
+        
+        drawCrocodiles(crocs, totalCrocs); // Disegna i coccodrilli
         drawVoid();
         drawFrog(&frog);
         drawTane(taneOccupate);
@@ -248,8 +266,17 @@ int main() {
                 drawBullet(&bullets[i]);  // Usa drawBullet
             }
         }
+        // Disegno delle granate
+        for (int i = 0; i < MAX_GRENADES; i++) {  // Usa MAX_BULLETS
+            if (grenades[i].inGioco) {
+                drawGrenade(&grenades[i]);  // Usa drawBullet
+            }
+        }
         refresh();
+
     }
+
+
 
     endwin();
     kill(pid_frog, SIGTERM);
@@ -260,3 +287,4 @@ int main() {
     wait(NULL);
     return 0;
 }
+
