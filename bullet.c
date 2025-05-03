@@ -34,20 +34,9 @@ void bulletProcess(Entity *bullet, int pipeFD) {
         if (bullet->inGioco)
             write(pipeFD, bullet, sizeof(Entity));
         
-        usleep(100000);  // Più veloce dei coccodrilli
+        usleep(50000);  // Più veloce dei coccodrilli
     }
 }
-
-// Funzione per creare un bullet
-void createBullet(Entity *bullet, int x, int y, int direction, int isGrenade) {
-    bullet->x = x;
-    bullet->y = y;
-    bullet->direction = direction;
-    bullet->type = isGrenade ? OBJECT_GRENADE : OBJECT_BULLET;  
-    bullet->inGioco = 1;
-    bullet->speed = isGrenade ? 2 : 1; // Granate sono più lente
-}
-
 
 
 // Funzione per gestire la collisione tra il bullet e la rana
@@ -89,6 +78,6 @@ void grenadeProcess(Entity *grenade, int pipeFD) {
         if (grenade->inGioco)
             write(pipeFD, grenade, sizeof(Entity));
         
-        usleep(100000);  // Più veloce dei coccodrilli
+        usleep(50000);  // Più veloce dei coccodrilli
     }
 }

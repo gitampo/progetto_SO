@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <time.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
@@ -13,6 +14,7 @@
 #include "bullet.h"
 
 int main() {
+    srand(time(NULL)); 
     initscr();
     cbreak();
     noecho();
@@ -57,8 +59,6 @@ int main() {
     // Inizializzazione della rana
     int taneOccupate[NUM_TANE] = {0};  // 0 = libera, 1 = occupata
     Entity frog;
-    frog.attached = 0; // 0 se non attaccato, 1 se attaccato
-    frog.attached_crocodile_id = -1; // ID del coccodrillo a cui è attaccato
     frog.type = OBJECT_FROG;
     frog.y = LINES - FROG_HEIGHT; 
     frog.x = (COLS - FROG_WIDTH) / 2;

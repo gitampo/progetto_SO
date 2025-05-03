@@ -74,8 +74,6 @@ void frogProcess(Entity *frog, int fileds[2], int toFrog[2]) {
 
                     else
                     frog->y = validY_min;
-                    frog->attached = 0; // Non è più attaccato a un coccodrillo
-                    frog->attached_crocodile_id = -1; // Reset ID coccodrillo
                     payload = *frog;
                     break;
                 case KEY_DOWN:
@@ -84,16 +82,12 @@ void frogProcess(Entity *frog, int fileds[2], int toFrog[2]) {
                     else
                     frog->y = validY_max;
                     payload = *frog;
-                    frog->attached = 0; // Non è più attaccato a un coccodrillo
-                    frog->attached_crocodile_id = -1; // Reset ID coccodrillo
                     break;
                 case KEY_LEFT:
                     if (frog->x - FROG_WIDTH >= validX_min)
                         frog->x -= FROG_WIDTH;
                     else
                     frog->x = validX_min;
-                    frog->attached = 0; // Non è più attaccato a un coccodrillo
-                    frog->attached_crocodile_id = -1; // Reset ID coccodrillo
                     payload = *frog;
                     break;
                 case KEY_RIGHT:
@@ -101,8 +95,6 @@ void frogProcess(Entity *frog, int fileds[2], int toFrog[2]) {
                         frog->x += FROG_WIDTH;
                     else
                     frog->x = validX_max;
-                    frog->attached = 0; // Non è più attaccato a un coccodrillo
-                    frog->attached_crocodile_id = -1; // Reset ID coccodrillo
                     payload = *frog;
                     break;
                 case ' ':
