@@ -89,7 +89,7 @@ void crocProcess(Entity *croc, int fileds, int riverStart) {
             bullet.y = bulletStartY;
             bullet.direction = croc->direction;
             bullet.inGioco = 1;
-            bullet.speed = 2; // Velocità del proiettile
+            bullet.speed = 1; // Velocità del proiettile
             write(fileds, &bullet, sizeof(Entity)); // Invia il bullet al processo padre
         }
 

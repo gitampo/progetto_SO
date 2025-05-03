@@ -32,7 +32,7 @@ int main() {
     }
     init_pair(5, COLOR_GREEN, COLOR_GREEN);
     init_pair(6, COLOR_BLACK, COLOR_BLACK);
-    init_pair(7, COLOR_WHITE, COLOR_BLACK);
+    init_pair(7, COLOR_WHITE, COLOR_BLUE);
 
     nodelay(stdscr, TRUE);
 
@@ -180,7 +180,7 @@ int main() {
                     temp.x = grenadesx[i]; // Imposta la posizione della granata
                     temp.type = OBJECT_GRENADE; // Imposta il tipo di proiettile
                     temp.inGioco = 1; // Imposta lo stato della granata a "in gioco"
-                    temp.speed = 2; // Imposta la velocità della granata
+                    temp.speed = 1; // Imposta la velocità della granata
                     temp.direction = grenade_direction[i]; // Imposta la direzione della granata
                     grenades[i_last_grenades] = temp; // Aggiungi il proiettile all'array
                     
@@ -198,9 +198,8 @@ int main() {
                     } 
                     i_last_grenades = (i_last_grenades + 1) % MAX_GRENADES; // Incrementa l'indice dell'ultimo proiettile creato
                 }
-            }
 
-            else if (temp.type == OBJECT_GRENADE) {
+            } else if (temp.type == OBJECT_GRENADE) {
                 // exit(EXIT_SUCCESS); // Termina il processo figlio del proiettile
                 if (temp.inGioco) {
                     grenades[temp.id] = temp; // Aggiungi il proiettile all'array
@@ -211,27 +210,75 @@ int main() {
                 }
             }
         } 
-      
-        for(int i = 0; i < totalCrocs; i++) {
-         
-            if(
-                (frog.y == crocs[i].y) && 
-                (
-                    (inBetween(frog.x, crocs[i].x, crocs[i].x + CROC_WIDTH) && 
-                    inBetween(frog.x, crocs[i].x, crocs[i].x + CROC_WIDTH)) ||
-                    (inBetween(frog.x + FROG_WIDTH, crocs[i].x, crocs[i].x + CROC_WIDTH) && 
-                    inBetween(frog.x + FROG_WIDTH, crocs[i].x, crocs[i].x + CROC_WIDTH))
-                )
-            ) {
-                frog_on_crocodile = i; // La rana è sopra il coccodrillo
-                break;
-            } else {
-                frog_on_crocodile = -1; // La rana non è sopra nessun coccodrillo
-            }
         
+        if (frog.y >= riverStartRow && frog.y < riverStartRow + RIVER_HEIGHT) {
+            for(int i = 0; i < totalCrocs; i++) {
+                if(
+                    (frog.y == crocs[i].y) && 
+                    (
+                        (inBetween(frog.x, crocs[i].x, crocs[i].x + CROC_WIDTH) ||
+                        inBetween(frog.x + FROG_WIDTH, crocs[i].x, crocs[i].x + CROC_WIDTH))
+                    )
+                ) {
+                    frog_on_crocodile = i; // La rana è sopra il coccodrillo
+                    break;
+                } else {
+                    frog_on_crocodile = -1; // La rana non è sopra nessun coccodrillo
+                }
+            }
+
+            if (frog_on_crocodile == -1) {
+                //in futuro devi decrementare la vita della rana
+                frog.y = LINES - FROG_HEIGHT; 
+                frog.x = (COLS - FROG_WIDTH) / 2;
+                write(toFrog[1], &frog, sizeof(Entity)); // Invia la rana al processo padre
+
+            }
+
+
+        } else {
+            frog_on_crocodile = -1; // La rana non è sopra nessun coccodrillo
         }
-       
-     
+
+        for (int i = 0; i < MAX_BULLETS; i++)
+        {
+            if (!bullets[i].inGioco) {
+                continue; // Se il proiettile non è in gioco, salta l'iterazione
+            }
+           if (bullets[i].y == frog.y + FROG_HEIGHT / 2 && inBetween(bullets[i].x, frog.x, frog.x + FROG_WIDTH - 1)) {
+                // La rana è colpita da un proiettile
+                frog.y = LINES - FROG_HEIGHT; 
+                frog.x = (COLS - FROG_WIDTH) / 2;
+                write(toFrog[1], &frog, sizeof(Entity)); // Invia la rana al processo padre
+                bullets[i].inGioco = 0; // Rimuovi il proiettile
+                kill(pid_bullets[i], SIGTERM); // Termina il processo del proiettile
+                //togli una vita
+               break;
+            }
+        }
+
+        for (int i = 0; i < MAX_BULLETS; i++){
+            if (!bullets[i].inGioco) {
+                continue; // Se il proiettile non è in gioco, salta l'iterazione
+            } for (int j = 0; j < MAX_GRENADES; j++)
+            {
+                if (!grenades[j].inGioco) {
+                    continue; // Se il proiettile non è in gioco, salta l'iterazione
+                }
+                if (bullets[i].y == grenades[j].y && bullets[i].x == grenades[j].x) {
+                    bullets[i].inGioco = 0; // Rimuovi il proiettile
+                    kill(pid_bullets[i], SIGTERM); // Termina il processo del proiettile
+                    grenades[j].inGioco = 0; // Rimuovi la granata
+                    kill(pid_grenades[j], SIGTERM); // Termina il processo della granata
+                    break;
+                }
+            }
+            
+
+         
+            
+        }
+        
 
         // Verifica se la rana è entrata in una tana
         int tanaIndex = isFrogInTana(&frog);

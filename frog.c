@@ -49,6 +49,7 @@ void frogProcess(Entity *frog, int fileds[2], int toFrog[2]) {
     Entity temp;
     Entity payload = *frog; // Inizializza il payload con i dati della rana
     int onCroc = 0;
+    int death = 0; // Flag per la morte della rana
 
     while (1) {
         int update = 1;
@@ -58,6 +59,12 @@ void frogProcess(Entity *frog, int fileds[2], int toFrog[2]) {
             if (temp.type == FROG_ON_CROCODILE) {
                 frog->x = temp.x; // La rana si posiziona sopra il coccodrillo
                 onCroc = 1; // La rana è attaccata a un coccodrillo
+                payload = *frog; // Invia la rana aggiornata al processo padre
+            } else {
+                frog->y = temp.y; // La rana si posiziona sopra il coccodrillo
+                frog->x = temp.x; // La rana si posiziona sopra il coccodrillo
+                onCroc = 0; // La rana non è attaccata a un coccodrillo
+                death = 1; // La rana è morta
                 payload = *frog; // Invia la rana aggiornata al processo padre
             }
         } 
@@ -110,8 +117,9 @@ void frogProcess(Entity *frog, int fileds[2], int toFrog[2]) {
             }
        // }
 
-        if (update || onCroc) {
+        if (update || onCroc || death) {
             write(fileds[1], &payload, sizeof(Entity));
+            death = 0; // Reset dello stato di morte
             onCroc = 0; // Reset dello stato di attacco
         }
    

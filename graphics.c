@@ -97,14 +97,20 @@ void drawVoid() {
 // Funzione per disegnare un bullet
 void drawBullet(Entity *bullet) {
     if (bullet->inGioco) {
+        if (bullet->x >= ((COLS - PAVEMENT_WIDTH) / 2) &&
+           bullet->x < ((COLS - PAVEMENT_WIDTH) / 2) + PAVEMENT_WIDTH){
         attron(COLOR_PAIR(7));  // Usa un colore visibile
         mvaddch(bullet->y, bullet->x, '*');
         attroff(COLOR_PAIR(7));
+     }
     }
 }
 
 void drawGrenade(Entity *grenade) {
+    if (grenade->x >= ((COLS - PAVEMENT_WIDTH) / 2) &&
+        grenade->x < ((COLS - PAVEMENT_WIDTH) / 2) + PAVEMENT_WIDTH){
     attron(COLOR_PAIR(7));
     mvprintw(grenade->y, grenade->x, grenade->direction ==-1 ? "<" : ">"); 
     attroff(COLOR_PAIR(7));
+ }
 }

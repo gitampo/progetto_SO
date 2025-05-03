@@ -34,7 +34,7 @@ void bulletProcess(Entity *bullet, int pipeFD) {
         if (bullet->inGioco)
             write(pipeFD, bullet, sizeof(Entity));
         
-        usleep(50000);  // Più veloce dei coccodrilli
+        usleep(25000);  // Più veloce dei coccodrilli
     }
 }
 
@@ -78,6 +78,6 @@ void grenadeProcess(Entity *grenade, int pipeFD) {
         if (grenade->inGioco)
             write(pipeFD, grenade, sizeof(Entity));
         
-        usleep(50000);  // Più veloce dei coccodrilli
+        usleep(25000);  // Più veloce dei coccodrilli
     }
 }
