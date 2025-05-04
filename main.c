@@ -1,5 +1,7 @@
 #include <stdio.h>
+#include <locale.h>
 #include <time.h>
+#include <string.h> 
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
@@ -14,6 +16,8 @@
 #include "bullet.h"
 
 int main() {
+    setlocale(LC_ALL, "");
+
     srand(time(NULL)); 
     initscr();
     cbreak();
@@ -33,6 +37,7 @@ int main() {
     init_pair(5, COLOR_GREEN, COLOR_GREEN);
     init_pair(6, COLOR_BLACK, COLOR_BLACK);
     init_pair(7, COLOR_WHITE, COLOR_BLUE);
+    init_pair(8, COLOR_RED, COLOR_BLACK);
 
     nodelay(stdscr, TRUE);
 
@@ -124,7 +129,37 @@ int main() {
     }
 
     Entity temp;
+    
+       int lives = 3;  
+    int game_win = 0; // Flag per indicare se il gioco è vinto
+    
     while (1) {
+          // dentro il tuo while(1)…
+
+    // ricalcola la riga delle tane e quella dei cuori
+    int taneRow  = ((LINES - 27) - PAVEMENT_HEIGHT) - TANE_HEIGHT;
+    int heartRow = taneRow - 1;
+
+    // colonna di partenza del fiume
+    // (già la calcoli prima del ciclo)
+    // int startCol = (COLS - PAVEMENT_WIDTH) / 2;
+
+    // 1) stampa il label "Lives:" a sinistra
+    mvprintw(heartRow, startCol, "Lives:");
+
+    // 2) a destra di "Lives:" lascia uno spazio, poi disegna i cuori
+    int heartsStart = startCol + strlen("Lives:") + 1;
+    for (int i = 0; i < 3; i++) {
+        int col = heartsStart + i * 2;
+        if (i < lives) {
+            attron(COLOR_PAIR(8));
+            mvaddstr(heartRow, col, "♥");
+            attroff(COLOR_PAIR(8));
+        } else {
+            mvaddch(heartRow, col, ' ');
+        }
+    }
+
         if (read(fileds[0], &temp, sizeof(Entity)) > 0) {
             if (temp.type == OBJECT_FROG) {
                 frog.y = temp.y;
@@ -232,6 +267,11 @@ int main() {
                 frog.y = LINES - FROG_HEIGHT; 
                 frog.x = (COLS - FROG_WIDTH) / 2;
                 write(toFrog[1], &frog, sizeof(Entity)); // Invia la rana al processo padre
+                lives--;
+                 if (lives <= 0) {
+                    break;
+                 }
+                 
 
             }
 
@@ -252,7 +292,10 @@ int main() {
                 write(toFrog[1], &frog, sizeof(Entity)); // Invia la rana al processo padre
                 bullets[i].inGioco = 0; // Rimuovi il proiettile
                 kill(pid_bullets[i], SIGTERM); // Termina il processo del proiettile
-                //togli una vita
+                lives--;
+                 if (lives <= 0) {
+                    break;
+                 }
                break;
             }
         }
@@ -286,6 +329,22 @@ int main() {
             taneOccupate[tanaIndex] = 1; 
             tanaIndex = -1; // Reset dell'indice della tana
         }
+
+            // --- LOGICA VITTORIA: tutte e 5 le tane piene e almeno una vita rimasta ---
+    {
+        int allFilled = 1;
+        for (int ti = 0; ti < NUM_TANE; ti++) {
+            if (!taneOccupate[ti]) {
+                allFilled = 0;
+                break;
+            }
+        }
+        if (allFilled && lives > 0) {
+            game_win = 1;
+            break;      // esce dal while
+        }
+    }
+
 
         // Invece di chiamare clear(), ridisegniamo le aree statiche che "cancellano" le vecchie scritture: 
         // Ridisegna il fiume e il marciapiede: questi sovrascrivono l'area 
@@ -326,6 +385,30 @@ int main() {
 
 
     endwin();
+
+    if (game_win) {
+        // Schermata vittoria
+        initscr();
+        clear();
+        mvprintw(LINES/2,   (COLS-12)/2, "HAI VINTO!");
+        mvprintw(LINES/2+1, (COLS-28)/2, "Premi un tasto per uscire");
+        refresh();
+        nodelay(stdscr, FALSE);
+        getch();
+        endwin();
+    } else {
+        // Schermata sconfitta (già c’era)
+        initscr();
+        clear();
+        mvprintw(LINES/2,   (COLS-9)/2,  "GAME OVER");
+        mvprintw(LINES/2+1, (COLS-21)/2, "Premi un tasto per uscire");
+        refresh();
+        nodelay(stdscr, FALSE);
+        getch();
+        endwin();
+    }
+
+    // Termina processi figli 
     kill(pid_frog, SIGTERM);
     for (int i = 0; i < totalCrocs; i++){
         kill(pid_crocs[i], SIGTERM); // Termina i processi dei coccodrilli
