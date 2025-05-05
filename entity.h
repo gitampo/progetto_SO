@@ -18,7 +18,6 @@ typedef enum {
 typedef struct {
     int id;
     ObjectType type;
-    int attached; // 1 se la rana è attaccata a un coccodrillo, 0 altrimenti
     int attached_crocodile_id; // ID del coccodrillo a cui è attaccato
     int x;
     int y;

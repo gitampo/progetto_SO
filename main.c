@@ -1,4 +1,7 @@
 #include <stdio.h>
+#include <locale.h>
+#include <time.h>
+#include <string.h> 
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
@@ -13,6 +16,9 @@
 #include "bullet.h"
 
 int main() {
+    setlocale(LC_ALL, "");
+
+    srand(time(NULL)); 
     initscr();
     cbreak();
     noecho();
@@ -30,7 +36,8 @@ int main() {
     }
     init_pair(5, COLOR_GREEN, COLOR_GREEN);
     init_pair(6, COLOR_BLACK, COLOR_BLACK);
-    init_pair(7, COLOR_WHITE, COLOR_BLACK);
+    init_pair(7, COLOR_WHITE, COLOR_BLUE);
+    init_pair(8, COLOR_RED, COLOR_BLACK);
 
     nodelay(stdscr, TRUE);
 
@@ -57,8 +64,6 @@ int main() {
     // Inizializzazione della rana
     int taneOccupate[NUM_TANE] = {0};  // 0 = libera, 1 = occupata
     Entity frog;
-    frog.attached = 0; // 0 se non attaccato, 1 se attaccato
-    frog.attached_crocodile_id = -1; // ID del coccodrillo a cui è attaccato
     frog.type = OBJECT_FROG;
     frog.y = LINES - FROG_HEIGHT; 
     frog.x = (COLS - FROG_WIDTH) / 2;
@@ -106,7 +111,7 @@ int main() {
             exit(EXIT_SUCCESS);  // Ogni processo figlio termina dopo aver eseguito il proprio lavoro
         }
     }
-    
+
   
     // Inizializzazione dell'array per i bullet
     Entity bullets[MAX_BULLETS];  // Usa MAX_BULLETS invece di MAX_PROJECTILES
@@ -124,7 +129,24 @@ int main() {
     }
 
     Entity temp;
+    
+    int lives = 3;  
+    int game_win = 0; // Flag per indicare se il gioco è vinto
+    int holeRow     = HOLE_ROW;               // macro già in graphics.h
+    int labelLen    = strlen("Lives:");
+    int heartsStart = startCol + labelLen + 1;
+    int timerCol    = heartsStart + 3*2 + 2;   // tre cuori * 2 colonne + gap
+    int taneRow  = ((LINES - 27) - PAVEMENT_HEIGHT) - TANE_HEIGHT;
+    int heartRow = taneRow - 1;
+    
+    
+    int maxTime = 60; // Tempo massimo in secondi
+    int bar_timeLeft = maxTime; // Tempo rimanente
+    time_t bar_lastTick = time(NULL);
+
     while (1) {
+
+
         if (read(fileds[0], &temp, sizeof(Entity)) > 0) {
             if (temp.type == OBJECT_FROG) {
                 frog.y = temp.y;
@@ -164,7 +186,7 @@ int main() {
                 } else {
                     // Rimuovi il proiettile dall'array
                     bullets[temp.id].inGioco = 0;
-                    kill(pid_bullets[temp.id], SIGTERM);
+                    kill(pid_bullets[temp.id], SIGKILL);
                 }
 
               
@@ -180,7 +202,7 @@ int main() {
                     temp.x = grenadesx[i]; // Imposta la posizione della granata
                     temp.type = OBJECT_GRENADE; // Imposta il tipo di proiettile
                     temp.inGioco = 1; // Imposta lo stato della granata a "in gioco"
-                    temp.speed = 2; // Imposta la velocità della granata
+                    temp.speed = 1; // Imposta la velocità della granata
                     temp.direction = grenade_direction[i]; // Imposta la direzione della granata
                     grenades[i_last_grenades] = temp; // Aggiungi il proiettile all'array
                     
@@ -198,47 +220,178 @@ int main() {
                     } 
                     i_last_grenades = (i_last_grenades + 1) % MAX_GRENADES; // Incrementa l'indice dell'ultimo proiettile creato
                 }
-            }
 
-            else if (temp.type == OBJECT_GRENADE) {
+            } else if (temp.type == OBJECT_GRENADE) {
                 // exit(EXIT_SUCCESS); // Termina il processo figlio del proiettile
                 if (temp.inGioco) {
                     grenades[temp.id] = temp; // Aggiungi il proiettile all'array
                 } else {
                     // Rimuovi il proiettile dall'array
                     grenades[temp.id].inGioco = 0;
-                    kill(pid_grenades[temp.id], SIGTERM);
+                    kill(pid_grenades[temp.id], SIGKILL);
                 }
             }
         } 
-      
-        for(int i = 0; i < totalCrocs; i++) {
-         
-            if(
-                (frog.y == crocs[i].y) && 
-                (
-                    (inBetween(frog.x, crocs[i].x, crocs[i].x + CROC_WIDTH) && 
-                    inBetween(frog.x, crocs[i].x, crocs[i].x + CROC_WIDTH)) ||
-                    (inBetween(frog.x + FROG_WIDTH, crocs[i].x, crocs[i].x + CROC_WIDTH) && 
-                    inBetween(frog.x + FROG_WIDTH, crocs[i].x, crocs[i].x + CROC_WIDTH))
-                )
-            ) {
-                frog_on_crocodile = i; // La rana è sopra il coccodrillo
-                break;
-            } else {
-                frog_on_crocodile = -1; // La rana non è sopra nessun coccodrillo
-            }
-        
-        }
-       
-     
 
-        // Verifica se la rana è entrata in una tana
-        int tanaIndex = isFrogInTana(&frog);
-        if (tanaIndex != -1) {
-            taneOccupate[tanaIndex] = 1; 
-            tanaIndex = -1; // Reset dell'indice della tana
+        time_t now = time(NULL);
+        if (now - bar_lastTick >= 1) {
+            bar_lastTick = now;
+            bar_timeLeft--;
+            if (bar_timeLeft <= 0) {
+                // tempo scaduto: perdi vita e reset rana
+                frog.y = LINES - FROG_HEIGHT; 
+                frog.x = (COLS - FROG_WIDTH) / 2;
+                write(toFrog[1], &frog, sizeof(Entity)); // Invia la rana al processo padre
+                lives--;
+                 if (lives <= 0) {
+                    break;
+                 }
+                bar_timeLeft = maxTime;
+            }
         }
+        
+        if (frog.y >= riverStartRow && frog.y < riverStartRow + RIVER_HEIGHT) {
+            for(int i = 0; i < totalCrocs; i++) {
+                if(
+                    (frog.y == crocs[i].y) && 
+                    (
+                        (inBetween(frog.x, crocs[i].x, crocs[i].x + CROC_WIDTH) ||
+                        inBetween(frog.x + FROG_WIDTH, crocs[i].x, crocs[i].x + CROC_WIDTH))
+                    )
+                ) {
+                    frog_on_crocodile = i; // La rana è sopra il coccodrillo
+                    break;
+                } else {
+                    frog_on_crocodile = -1; // La rana non è sopra nessun coccodrillo
+                }
+            }
+
+            if (frog_on_crocodile == -1) {
+                //in futuro devi decrementare la vita della rana
+                frog.y = LINES - FROG_HEIGHT; 
+                frog.x = (COLS - FROG_WIDTH) / 2;
+                write(toFrog[1], &frog, sizeof(Entity)); // Invia la rana al processo padre
+                lives--;
+                 if (lives <= 0) {
+                    break;
+                 }
+                 
+
+            }
+
+
+        } else {
+            frog_on_crocodile = -1; // La rana non è sopra nessun coccodrillo
+        }
+
+        for (int i = 0; i < MAX_BULLETS; i++)
+        {
+            if (!bullets[i].inGioco) {
+                continue; // Se il proiettile non è in gioco, salta l'iterazione
+            }
+           if (bullets[i].y == frog.y + FROG_HEIGHT / 2 && inBetween(bullets[i].x, frog.x, frog.x + FROG_WIDTH - 1)) {
+                // La rana è colpita da un proiettile
+                frog.y = LINES - FROG_HEIGHT; 
+                frog.x = (COLS - FROG_WIDTH) / 2;
+                write(toFrog[1], &frog, sizeof(Entity)); // Invia la rana al processo padre
+                bullets[i].inGioco = 0; // Rimuovi il proiettile
+                kill(pid_bullets[i], SIGKILL); // Termina il processo del proiettile
+                lives--;
+                 if (lives <= 0) {
+                    break;
+                 }
+               break;
+            }
+        }
+
+        for (int i = 0; i < MAX_BULLETS; i++){
+            if (!bullets[i].inGioco) {
+                continue; // Se il proiettile non è in gioco, salta l'iterazione
+            } for (int j = 0; j < MAX_GRENADES; j++)
+            {
+                if (!grenades[j].inGioco) {
+                    continue; // Se il proiettile non è in gioco, salta l'iterazione
+                }
+                if (bullets[i].y == grenades[j].y && bullets[i].x == grenades[j].x) {
+                    bullets[i].inGioco = 0; // Rimuovi il proiettile
+                    kill(pid_bullets[i], SIGKILL); // Termina il processo del proiettile
+                    grenades[j].inGioco = 0; // Rimuovi la granata
+                    kill(pid_grenades[j], SIGKILL); // Termina il processo della granata
+                    break;
+                }
+            }
+            
+
+         
+            
+        }
+
+
+        // calcolo la riga delle tane
+int holeRow = ((LINES - 27) - PAVEMENT_HEIGHT) - TANE_HEIGHT;
+
+// ho raggiunto l’area delle tane?
+if (frog.y == holeRow) {
+    int tanaIndex = isFrogInTana(&frog);
+    if (tanaIndex != -1) {
+        // è una tana valida
+        if (!taneOccupate[tanaIndex]) {
+            // occupo la tana libera
+            taneOccupate[tanaIndex] = 1;
+        } else {
+            // tana già piena → perdi una vita e resetto
+            lives--;
+            if (lives <= 0) break;
+            frog.y = LINES - FROG_HEIGHT;
+            frog.x = (COLS - FROG_WIDTH)/2;
+            continue;
+        }
+    } else {
+        // sei sopra la riga delle tane ma non in una tana → perdi vita
+        lives--;
+        if (lives <= 0) break;
+        frog.y = LINES - FROG_HEIGHT;
+        frog.x = (COLS - FROG_WIDTH)/2;
+        continue;
+    }
+
+    // controllo vittoria
+    int allFilled = 1;
+    for (int ti = 0; ti < NUM_TANE; ti++) {
+        if (!taneOccupate[ti]) {
+            allFilled = 0;
+            break;
+        }
+    }
+    if (allFilled && lives > 0) {
+        game_win = 1;
+        break;
+    }
+}
+
+    erase();
+
+    // ricalcola la riga delle tane e quella dei cuori
+    int taneRow  = ((LINES - 27) - PAVEMENT_HEIGHT) - TANE_HEIGHT;
+    int heartRow = taneRow - 1;
+
+    // 1) stampa il label "Lives:" a sinistra
+    mvprintw(heartRow, startCol, "Lives:");
+
+    // 2) a destra di "Lives:" lascia uno spazio, poi disegna i cuori
+    // int heartsStart = startCol + strlen("Lives:") + 1;
+    for (int i = 0; i < 3; i++) {
+        int col = heartsStart + i * 2;
+        if (i < lives) {
+            attron(COLOR_PAIR(8));
+            mvprintw(heartRow, col, "%lc", L'♥');
+            attroff(COLOR_PAIR(8));
+        } else {
+            mvaddch(heartRow, col, ' ');
+        }
+    }
+
+    
 
         // Invece di chiamare clear(), ridisegniamo le aree statiche che "cancellano" le vecchie scritture: 
         // Ridisegna il fiume e il marciapiede: questi sovrascrivono l'area 
@@ -272,17 +425,60 @@ int main() {
                 drawGrenade(&grenades[i]);  // Usa drawBullet
             }
         }
+
+        drawTimer(bar_timeLeft, maxTime, heartRow, timerCol); // Disegna il timer
+
         refresh();
 
     }
 
-
-
-    endwin();
-    kill(pid_frog, SIGTERM);
+    // Termina processi figli 
+    kill(pid_frog, SIGKILL);
     for (int i = 0; i < totalCrocs; i++){
-        kill(pid_crocs[i], SIGTERM); // Termina i processi dei coccodrilli
+        kill(pid_crocs[i], SIGKILL); // Termina i processi dei coccodrilli
     }
+
+    for (int i = 0; i < MAX_BULLETS; i++)
+    {
+        if (bullets[i].inGioco) {
+            kill(pid_bullets[i], SIGKILL); // Termina i processi dei proiettili
+        }
+    }
+
+    for (int i = 0; i < MAX_GRENADES; i++)
+    {
+        if (grenades[i].inGioco) {
+            kill(pid_grenades[i], SIGKILL); // Termina i processi delle granate
+        }
+    }
+    // Termina i processi delle granate
+    
+
+    if (game_win) {
+        // Schermata vittoria
+       
+        clear();
+        mvprintw(LINES/2,   (COLS-12)/2, "HAI VINTO!");
+        mvprintw(LINES/2+1, (COLS-28)/2, "Premi un tasto per uscire");
+        refresh();
+        nodelay(stdscr, FALSE);
+
+        getch();
+        endwin();
+    } else {
+        // Schermata sconfitta (già c’era)
+       
+        clear();
+        mvprintw(LINES/2,   (COLS-9)/2,  "GAME OVER");
+        mvprintw(LINES/2+1, (COLS-21)/2, "Premi un tasto per uscire");
+        refresh();
+        nodelay(stdscr, FALSE);
+
+        getch();
+        endwin();
+    }
+
+    
     wait(NULL);
     wait(NULL);
     return 0;

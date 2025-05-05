@@ -9,11 +9,16 @@
 #define PAVEMENT_WIDTH  80  // Larghezza dell'area del marciapiede (e del fiume)
 #define RIVER_HEIGHT    24   // Altezza del fiume
 
+#define TIMER_BAR_WIDTH 60 // Larghezza della barra del timer
+
 // Nuove costanti per l'area superiore:
 #define MIDDLE_SIDEWALK_HEIGHT 3     // Altezza del marciapiede intermedio
 #define TANE_HEIGHT 3               // Altezza delle tane
 #define NUM_TANE 5                 // Numero di tane (slot)
 #define LARGHEZZA_TANA 8          // Larghezza della tana
+#define HOLE_ROW  (LINES - RIVER_HEIGHT - PAVEMENT_HEIGHT - TANE_HEIGHT) // Riga delle tane
+#define TIMER_WIDTH  60 // Larghezza del timer
+
 
 #define SYMBOL_TANA_1 "--------"        
 #define SYMBOL_TANA_2 "|      |"
@@ -28,5 +33,8 @@ void drawVoid();
 void drawTane(int statusTane[NUM_TANE]);
 void drawBullet(Entity *bullet);  
 void drawGrenade(Entity *grenade);  
+// Timer/progress-bar sotto il marciapiede inferiore
+void drawTimer(int timeLeft, int maxTime, int bar_row, int bar_colStart);
+
 
 #endif // GRAPHICS_H

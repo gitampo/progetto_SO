@@ -2,7 +2,7 @@
 
 CC = gcc
 CFLAGS = -Wall -Wextra -std=c99 -pedantic -O2
-LDFLAGS = -lncurses
+LDFLAGS = -I/opt/homebrew/opt/ncurses/include -L/opt/homebrew/opt/ncurses/lib -lncursesw
 
 # Elenco dei sorgenti: usa collision.c al posto di collisioni.c
 SOURCES = main.c bullet.c collision.c croc.c frog.c graphics.c

@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <time.h>
 #include "bullet.h"
 
 
@@ -46,6 +47,7 @@ void creaCrocodiles(Entity crocs[], int startCol, int endCol, int riverStartRow)
 }
 
 void crocProcess(Entity *croc, int fileds, int riverStart) {
+    srand(getpid()); // Inizializza il seme del generatore casuale
     int startCol = (COLS - PAVEMENT_WIDTH) / 2;
     int endCol = startCol + PAVEMENT_WIDTH;
     
@@ -53,11 +55,19 @@ void crocProcess(Entity *croc, int fileds, int riverStart) {
 
      // Calcola il ritardo in base alla corsia
     int lane = (croc->y - riverStart) / CROC_HEIGHT;
-    croc->speed = 1; // (int) ((16 - lane) / .2f + .5f);
+   
+    switch(lane) {
+        case 0: croc->speed = 1; break;  
+        case 1: croc->speed = 2; break;
+        case 2: croc->speed = 3; break;
+        case 3: croc->speed = 1; break;
+        case 4: croc->speed = 2; break;  
+        default: croc->speed = 2; break; // Default se ci sono più corsie
+    }
 
     while (1) {
             // Aggiorna la posizione del coccodrillo
-        croc->x += croc->direction * croc->speed; // Velocità in base alla corsia
+        croc->x += croc->direction * croc->speed; 
         if (croc->x < (startCol - CROC_WIDTH)) {
             croc->x = endCol;
         } else if (croc->x > endCol) {
@@ -79,17 +89,8 @@ void crocProcess(Entity *croc, int fileds, int riverStart) {
             bullet.y = bulletStartY;
             bullet.direction = croc->direction;
             bullet.inGioco = 1;
-            bullet.speed = 2; // Velocità del proiettile
+            bullet.speed = 1; // Velocità del proiettile
             write(fileds, &bullet, sizeof(Entity)); // Invia il bullet al processo padre
-            // createBullet(&bullet, bulletStartX, bulletStartY, croc->direction, 0); // Non è una granata
-            /*
-            pid_t pid_bullet = fork();
-            if (pid_bullet == 0) {
-                // Processo figlio: gestisce il movimento del bullet
-                bulletProcess(&bullet, fileds); // Passa la pipe intera
-                exit(EXIT_SUCCESS);  // Termina il processo figlio
-            }
-            */
         }
 
         usleep(100000);
