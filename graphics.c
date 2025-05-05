@@ -1,5 +1,10 @@
 #include "graphics.h"
 #include <ncurses.h>
+#include <time.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include "frog.h"
+
 
 
 int taneOccupate[NUM_TANE] = {0};  // 0 = libera, 1 = occupata
@@ -114,3 +119,65 @@ void drawGrenade(Entity *grenade) {
     attroff(COLOR_PAIR(7));
  }
 }
+
+// --- variabili statiche di modulo ---
+static int bar_maxTime;
+static int bar_timeLeft;
+static time_t bar_lastTick;
+static int bar_row, bar_colStart, bar_width;
+static int *bar_lives;
+static Entity *bar_frog;
+static int bar_frogStartY, bar_frogStartX;
+static int  bar_toFrogFD;  // <-- nuovo
+
+
+void timerBarInit(int max_time, int row, int colStart, int width, int *lives, Entity *frog, int frogStartY, int frogStartX, int toFrogFD) {
+    bar_maxTime     = max_time;
+    bar_timeLeft    = max_time;
+    bar_lastTick    = time(NULL);
+    bar_row         = row;
+    bar_colStart    = colStart;
+    bar_width       = width;
+    bar_lives       = lives;
+    bar_frog        = frog;
+    bar_frogStartY  = frogStartY;
+    bar_frogStartX  = frogStartX;
+    bar_toFrogFD    = toFrogFD; 
+}
+
+void timerBarUpdate() {
+    time_t now = time(NULL);
+    if (now - bar_lastTick >= 1) {
+        bar_lastTick = now;
+        bar_timeLeft--;
+        if (bar_timeLeft <= 0) {
+            // tempo scaduto: perdi vita e reset rana
+            (*bar_lives)--;
+            bar_timeLeft = bar_maxTime;
+            bar_frog->y = bar_frogStartY;
+            bar_frog->x = bar_frogStartX;
+            write(bar_toFrogFD, bar_frog, sizeof(Entity)); // Invia la rana al processo padre
+            if (*bar_lives <= 0) {
+               return; // Esci se le vite sono esaurite
+            } else {
+                // Ridisegna la rana nella sua posizione iniziale
+                mvprintw(bar_frogStartY, bar_frogStartX, SYMBOL_FROG_1);
+                mvprintw(bar_frogStartY + 1, bar_frogStartX, SYMBOL_FROG_2);
+                mvprintw(bar_frogStartY + 2, bar_frogStartX, SYMBOL_FROG_3);
+            }
+        }
+    }
+}
+
+void DrawTimer() {
+    attron(COLOR_PAIR(5));
+    
+    for (int i = 0; i < bar_timeLeft; i++) {
+        mvprintw(bar_row, bar_colStart + i, "#"); // Cancella la barra precedente
+    }
+    attroff(COLOR_PAIR(5));
+    for (int i = bar_timeLeft; i < bar_maxTime - bar_timeLeft; i++) {
+        mvprintw(bar_row, bar_colStart + i, "#"); // Cancella la barra precedente
+    }
+    
+}   

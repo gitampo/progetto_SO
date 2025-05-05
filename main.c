@@ -111,7 +111,7 @@ int main() {
             exit(EXIT_SUCCESS);  // Ogni processo figlio termina dopo aver eseguito il proprio lavoro
         }
     }
-    
+
   
     // Inizializzazione dell'array per i bullet
     Entity bullets[MAX_BULLETS];  // Usa MAX_BULLETS invece di MAX_PROJECTILES
@@ -130,35 +130,19 @@ int main() {
 
     Entity temp;
     
-       int lives = 3;  
+    int lives = 3;  
     int game_win = 0; // Flag per indicare se il gioco è vinto
-    
-    while (1) {
-          // dentro il tuo while(1)…
-
-    // ricalcola la riga delle tane e quella dei cuori
+    int holeRow     = HOLE_ROW;               // macro già in graphics.h
+    int labelLen    = strlen("Lives:");
+    int heartsStart = startCol + labelLen + 1;
+    int timerCol    = heartsStart + 3*2 + 2;   // tre cuori * 2 colonne + gap
     int taneRow  = ((LINES - 27) - PAVEMENT_HEIGHT) - TANE_HEIGHT;
     int heartRow = taneRow - 1;
+    
+    timerBarInit(60, heartRow, timerCol, TIMER_WIDTH, &lives, &frog, LINES - FROG_HEIGHT, (COLS - FROG_WIDTH)/2, toFrog[1]);
 
-    // colonna di partenza del fiume
-    // (già la calcoli prima del ciclo)
-    // int startCol = (COLS - PAVEMENT_WIDTH) / 2;
+    while (1) {
 
-    // 1) stampa il label "Lives:" a sinistra
-    mvprintw(heartRow, startCol, "Lives:");
-
-    // 2) a destra di "Lives:" lascia uno spazio, poi disegna i cuori
-    int heartsStart = startCol + strlen("Lives:") + 1;
-    for (int i = 0; i < 3; i++) {
-        int col = heartsStart + i * 2;
-        if (i < lives) {
-            attron(COLOR_PAIR(8));
-            mvaddstr(heartRow, col, "♥");
-            attroff(COLOR_PAIR(8));
-        } else {
-            mvaddch(heartRow, col, ' ');
-        }
-    }
 
         if (read(fileds[0], &temp, sizeof(Entity)) > 0) {
             if (temp.type == OBJECT_FROG) {
@@ -245,6 +229,12 @@ int main() {
                 }
             }
         } 
+
+        timerBarUpdate();
+        if (lives <= 0) {
+            break; // Esci dal ciclo se le vite sono esaurite
+        }
+
         
         if (frog.y >= riverStartRow && frog.y < riverStartRow + RIVER_HEIGHT) {
             for(int i = 0; i < totalCrocs; i++) {
@@ -321,30 +311,72 @@ int main() {
          
             
         }
-        
 
-        // Verifica se la rana è entrata in una tana
-        int tanaIndex = isFrogInTana(&frog);
-        if (tanaIndex != -1) {
-            taneOccupate[tanaIndex] = 1; 
-            tanaIndex = -1; // Reset dell'indice della tana
-        }
 
-            // --- LOGICA VITTORIA: tutte e 5 le tane piene e almeno una vita rimasta ---
-    {
-        int allFilled = 1;
-        for (int ti = 0; ti < NUM_TANE; ti++) {
-            if (!taneOccupate[ti]) {
-                allFilled = 0;
-                break;
-            }
+        // calcolo la riga delle tane
+int holeRow = ((LINES - 27) - PAVEMENT_HEIGHT) - TANE_HEIGHT;
+
+// ho raggiunto l’area delle tane?
+if (frog.y == holeRow) {
+    int tanaIndex = isFrogInTana(&frog);
+    if (tanaIndex != -1) {
+        // è una tana valida
+        if (!taneOccupate[tanaIndex]) {
+            // occupo la tana libera
+            taneOccupate[tanaIndex] = 1;
+        } else {
+            // tana già piena → perdi una vita e resetto
+            lives--;
+            if (lives <= 0) break;
+            frog.y = LINES - FROG_HEIGHT;
+            frog.x = (COLS - FROG_WIDTH)/2;
+            continue;
         }
-        if (allFilled && lives > 0) {
-            game_win = 1;
-            break;      // esce dal while
+    } else {
+        // sei sopra la riga delle tane ma non in una tana → perdi vita
+        lives--;
+        if (lives <= 0) break;
+        frog.y = LINES - FROG_HEIGHT;
+        frog.x = (COLS - FROG_WIDTH)/2;
+        continue;
+    }
+
+    // controllo vittoria
+    int allFilled = 1;
+    for (int ti = 0; ti < NUM_TANE; ti++) {
+        if (!taneOccupate[ti]) {
+            allFilled = 0;
+            break;
+        }
+    }
+    if (allFilled && lives > 0) {
+        game_win = 1;
+        break;
+    }
+}
+
+
+    // ricalcola la riga delle tane e quella dei cuori
+    int taneRow  = ((LINES - 27) - PAVEMENT_HEIGHT) - TANE_HEIGHT;
+    int heartRow = taneRow - 1;
+
+    // 1) stampa il label "Lives:" a sinistra
+    mvprintw(heartRow, startCol, "Lives:");
+
+    // 2) a destra di "Lives:" lascia uno spazio, poi disegna i cuori
+    int heartsStart = startCol + strlen("Lives:") + 1;
+    for (int i = 0; i < 3; i++) {
+        int col = heartsStart + i * 2;
+        if (i < lives) {
+            attron(COLOR_PAIR(8));
+            mvaddstr(heartRow, col, "♥");
+            attroff(COLOR_PAIR(8));
+        } else {
+            mvaddch(heartRow, col, ' ');
         }
     }
 
+    
 
         // Invece di chiamare clear(), ridisegniamo le aree statiche che "cancellano" le vecchie scritture: 
         // Ridisegna il fiume e il marciapiede: questi sovrascrivono l'area 
@@ -378,34 +410,11 @@ int main() {
                 drawGrenade(&grenades[i]);  // Usa drawBullet
             }
         }
+
+        DrawTimer(); // Disegna il timer
+
         refresh();
 
-    }
-
-
-
-    endwin();
-
-    if (game_win) {
-        // Schermata vittoria
-        initscr();
-        clear();
-        mvprintw(LINES/2,   (COLS-12)/2, "HAI VINTO!");
-        mvprintw(LINES/2+1, (COLS-28)/2, "Premi un tasto per uscire");
-        refresh();
-        nodelay(stdscr, FALSE);
-        getch();
-        endwin();
-    } else {
-        // Schermata sconfitta (già c’era)
-        initscr();
-        clear();
-        mvprintw(LINES/2,   (COLS-9)/2,  "GAME OVER");
-        mvprintw(LINES/2+1, (COLS-21)/2, "Premi un tasto per uscire");
-        refresh();
-        nodelay(stdscr, FALSE);
-        getch();
-        endwin();
     }
 
     // Termina processi figli 
@@ -413,6 +422,48 @@ int main() {
     for (int i = 0; i < totalCrocs; i++){
         kill(pid_crocs[i], SIGTERM); // Termina i processi dei coccodrilli
     }
+
+    for (int i = 0; i < MAX_BULLETS; i++)
+    {
+        if (bullets[i].inGioco) {
+            kill(pid_bullets[i], SIGTERM); // Termina i processi dei proiettili
+        }
+    }
+
+    for (int i = 0; i < MAX_GRENADES; i++)
+    {
+        if (grenades[i].inGioco) {
+            kill(pid_grenades[i], SIGTERM); // Termina i processi delle granate
+        }
+    }
+    // Termina i processi delle granate
+    
+
+    if (game_win) {
+        // Schermata vittoria
+       
+        clear();
+        mvprintw(LINES/2,   (COLS-12)/2, "HAI VINTO!");
+        mvprintw(LINES/2+1, (COLS-28)/2, "Premi un tasto per uscire");
+        refresh();
+        nodelay(stdscr, FALSE);
+
+        getch();
+        endwin();
+    } else {
+        // Schermata sconfitta (già c’era)
+       
+        clear();
+        mvprintw(LINES/2,   (COLS-9)/2,  "GAME OVER");
+        mvprintw(LINES/2+1, (COLS-21)/2, "Premi un tasto per uscire");
+        refresh();
+        nodelay(stdscr, FALSE);
+
+        getch();
+        endwin();
+    }
+
+    
     wait(NULL);
     wait(NULL);
     return 0;
