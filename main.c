@@ -145,8 +145,7 @@ int main() {
     int bar_timeLeft = maxTime; // Tempo rimanente
     time_t bar_lastTick = time(NULL);
 
-    while (1) {
-
+    while (game_win == 0 && lives > 0) {
 
         if (read(fileds[0], &temp, sizeof(Entity)) > 0) {
             if (temp.type == OBJECT_FROG) {
@@ -245,6 +244,7 @@ int main() {
                 write(toFrog[1], &frog, sizeof(Entity)); // Invia la rana al processo padre
                 lives--;
                  if (lives <= 0) {
+                    
                     break;
                  }
                 bar_timeLeft = maxTime;
@@ -257,8 +257,8 @@ int main() {
                 if(
                     (frog.y == crocs[i].y) && 
                     (
-                        (inBetween(frog.x, crocs[i].x, crocs[i].x + CROC_WIDTH - 3) ||
-                        inBetween(frog.x + FROG_WIDTH - 3, crocs[i].x, crocs[i].x + CROC_WIDTH - 3))
+                        (inBetween(frog.x, crocs[i].x + 3, crocs[i].x + CROC_WIDTH - 3) ||
+                        inBetween(frog.x + FROG_WIDTH, crocs[i].x + 3, crocs[i].x + CROC_WIDTH - 3))
                     )
                 ) {
                     frog_on_crocodile = i; // La rana è sopra il coccodrillo
@@ -274,6 +274,7 @@ int main() {
                 frog.x = (COLS - FROG_WIDTH) / 2;
                 write(toFrog[1], &frog, sizeof(Entity)); // Invia la rana al processo padre
                 lives--;
+                bar_timeLeft = maxTime;
                  if (lives <= 0) {
                     break;
                  }
@@ -296,12 +297,15 @@ int main() {
                 bullets[i].inGioco = 0; // Rimuovi il proiettile
                 kill(pid_bullets[i], SIGKILL); // Termina il processo del proiettile
                 lives--;
-                 if (lives <= 0) {
-                    break;
-                 }
+                bar_timeLeft = maxTime;
                break;
             }
         }
+
+        if (lives <= 0) {
+            
+            break;
+         }
 
         for (int i = 0; i < MAX_BULLETS; i++){
             if (!bullets[i].inGioco) {
@@ -319,10 +323,7 @@ int main() {
                     break;
                 }
             }
-            
-
-         
-            
+        
         }
 
 
@@ -337,10 +338,14 @@ if (frog.y == holeRow) {
         if (!taneOccupate[tanaIndex]) {
             // occupo la tana libera
             taneOccupate[tanaIndex] = 1;
+            bar_timeLeft = maxTime;
         } else {
             // tana già piena → perdi una vita e resetto
             lives--;
-            if (lives <= 0) break;
+            bar_timeLeft = maxTime;
+            if (lives <= 0) {
+                break;
+            }
             frog.y = LINES - FROG_HEIGHT;
             frog.x = (COLS - FROG_WIDTH)/2;
             continue;
@@ -348,7 +353,10 @@ if (frog.y == holeRow) {
     } else {
         // sei sopra la riga delle tane ma non in una tana → perdi vita
         lives--;
-        if (lives <= 0) break;
+        bar_timeLeft = maxTime;
+        if (lives <= 0) {
+            break;
+        }
         frog.y = LINES - FROG_HEIGHT;
         frog.x = (COLS - FROG_WIDTH)/2;
         continue;

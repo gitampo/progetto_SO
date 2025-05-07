@@ -6,7 +6,7 @@
 
 
 #define SPRITE_CROC 'C'
-#define CROC_WIDTH 13
+#define CROC_WIDTH 16
 #define CROC_HEIGHT 3
 #define CROCS_PER_LANE 2
 #define LANES (RIVER_HEIGHT / CROC_HEIGHT)

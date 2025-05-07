@@ -10,15 +10,15 @@
 
 
 const char* SYMBOL_CROC_1[CROC_HEIGHT] = {
-    "_^=-^=-oo_.. ",
-    "\\       ^--- ",
-    "^y^--y^--'   "
+    "_^=-^=-^=-oo_.. ",
+    "\\           ^---",
+    " ^--^y^--y^--'  "
 };
 
 const char* SYMBOL_CROC_2[CROC_HEIGHT] = {
-    ".._oo-=^-=^_ ",
-    "---^       / ",
-    "'--^y--^y^   "
+    " .._oo-=^-=^-=^_",
+    "---^           /",
+    "  '--^y--^y^--^ "
 };
 
 void drawCrocodiles(const Entity crocs[], int totalCrocs) {
