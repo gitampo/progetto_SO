@@ -5,11 +5,7 @@
 #include <sys/wait.h>
 #include "frog.h"
 
-
-
 int taneOccupate[NUM_TANE] = {0};  // 0 = libera, 1 = occupata
-
-
 
 
 // Disegna il marciapiede centrato in basso (già esistente)
@@ -122,12 +118,12 @@ void drawGrenade(Entity *grenade) {
 
 
 void drawTimer(int timeLeft, int maxTime, int bar_row, int bar_colStart) {
-    attron(COLOR_PAIR(5));
+    attron(COLOR_PAIR(9));
     
     for (int i = 0; i < timeLeft; i++) {
         mvprintw(bar_row, bar_colStart + i, "#"); // Cancella la barra precedente
     }
-    attroff(COLOR_PAIR(5));
+    attroff(COLOR_PAIR(9));
     for (int i = timeLeft; i < maxTime - timeLeft; i++) {
         mvprintw(bar_row, bar_colStart + i, " "); // Cancella la barra precedente
     }

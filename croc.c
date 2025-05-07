@@ -9,19 +9,40 @@
 #include "bullet.h"
 
 
-// Disegna un coccodrillo
-void drawCrocodiles(const Entity crocs[], int totalCrocs ) {
+const char* SYMBOL_CROC_1[CROC_HEIGHT] = {
+    "_^=-^=-oo_.. ",
+    "\\       ^--- ",
+    "^y^--y^--'   "
+};
+
+const char* SYMBOL_CROC_2[CROC_HEIGHT] = {
+    ".._oo-=^-=^_ ",
+    "---^       / ",
+    "'--^y--^y^   "
+};
+
+void drawCrocodiles(const Entity crocs[], int totalCrocs) {
     attron(COLOR_PAIR(4));
+
     for (int i = 0; i < totalCrocs; i++) {
         if (!crocs[i].inGioco) continue;
+
+        const char** sprite = (crocs[i].direction == -1) ? SYMBOL_CROC_2 : SYMBOL_CROC_1;
+
         for (int row = 0; row < CROC_HEIGHT; row++) {
             for (int col = 0; col < CROC_WIDTH; col++) {
-                if (crocs[i].x + col >= ((COLS - PAVEMENT_WIDTH) / 2) &&
-                    crocs[i].x + col < ((COLS - PAVEMENT_WIDTH) / 2) + PAVEMENT_WIDTH)
-                    mvprintw(crocs[i].y + row, crocs[i].x + col, "%c", SPRITE_CROC);
+                int drawX = crocs[i].x + col;
+                int drawY = crocs[i].y + row;
+                int pavementStart = (COLS - PAVEMENT_WIDTH) / 2;
+                int pavementEnd = pavementStart + PAVEMENT_WIDTH;
+
+                if (drawX >= pavementStart && drawX < pavementEnd) {
+                    mvprintw(drawY, drawX, "%c", sprite[row][col]);
+                }
             }
         }
     }
+
     attroff(COLOR_PAIR(4));
 }
 

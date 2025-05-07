@@ -30,7 +30,7 @@ int main() {
     init_pair(1, COLOR_GREEN, COLOR_BLACK);
     init_pair(2, COLOR_BLUE, COLOR_BLUE);
     init_pair(3, COLOR_RED, COLOR_YELLOW);
-    init_pair(4, COLOR_RED, COLOR_BLACK);
+    init_pair(4, COLOR_GREEN, COLOR_BLUE);
     if (can_change_color()) {
         init_color(COLOR_YELLOW, 500, 250, 0);
     }
@@ -38,6 +38,7 @@ int main() {
     init_pair(6, COLOR_BLACK, COLOR_BLACK);
     init_pair(7, COLOR_WHITE, COLOR_BLUE);
     init_pair(8, COLOR_RED, COLOR_BLACK);
+    init_pair(9, COLOR_WHITE, COLOR_WHITE);
 
     nodelay(stdscr, TRUE);
 
@@ -249,14 +250,15 @@ int main() {
                 bar_timeLeft = maxTime;
             }
         }
+
         
         if (frog.y >= riverStartRow && frog.y < riverStartRow + RIVER_HEIGHT) {
             for(int i = 0; i < totalCrocs; i++) {
                 if(
                     (frog.y == crocs[i].y) && 
                     (
-                        (inBetween(frog.x, crocs[i].x, crocs[i].x + CROC_WIDTH) ||
-                        inBetween(frog.x + FROG_WIDTH, crocs[i].x, crocs[i].x + CROC_WIDTH))
+                        (inBetween(frog.x, crocs[i].x, crocs[i].x + CROC_WIDTH - 3) ||
+                        inBetween(frog.x + FROG_WIDTH - 3, crocs[i].x, crocs[i].x + CROC_WIDTH - 3))
                     )
                 ) {
                     frog_on_crocodile = i; // La rana è sopra il coccodrillo
@@ -275,10 +277,7 @@ int main() {
                  if (lives <= 0) {
                     break;
                  }
-                 
-
             }
-
 
         } else {
             frog_on_crocodile = -1; // La rana non è sopra nessun coccodrillo
