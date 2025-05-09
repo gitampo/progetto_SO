@@ -8,7 +8,8 @@
 
 extern int taneOccupate[NUM_TANE];  // Permette a frog.c di usare la variabile
  
-void drawFrog(const Entity *frog) { 
+void drawFrog(const Entity *frog) {
+
     attron(COLOR_PAIR(1));
     /*
     mvprintw(frog->y,     frog->x, SYMBOL_FROG_1); 
@@ -53,7 +54,6 @@ void frogProcess(Entity *frog, int fileds[2], int toFrog[2]) {
 
     while (1) {
         int update = 1;
-       
         
         if (read(toFrog[0], &temp, sizeof(Entity)) > 0) {
             if (temp.type == FROG_ON_CROCODILE) {
@@ -70,10 +70,9 @@ void frogProcess(Entity *frog, int fileds[2], int toFrog[2]) {
         } 
         
         // Assicurati che il tipo sia sempre OBJECT_FROG
-        
-        int ch = getch();
        
         //if (ch != ERR) {
+            int ch = getch(); // Leggi l'input dell'utente
             switch(ch) {
                 case KEY_UP:
                     if (frog->y - FROG_HEIGHT >= validY_min)
@@ -109,8 +108,12 @@ void frogProcess(Entity *frog, int fileds[2], int toFrog[2]) {
                     payload.type = CREATE_GRENADE;
                     payload.x = frog->x;  // Posizione centrale della rana
                     payload.y = frog->y + FROG_HEIGHT / 2;  // Posizione sopra la rana
-                   
                     break;
+
+                case 'p':
+                    payload.type = PAUSE_GAME;
+                    break;
+
                 default:
                     update = 0; // Mantieni la posizione corrente della rana
                     break;

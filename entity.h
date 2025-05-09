@@ -10,7 +10,9 @@ typedef enum {
     OBJECT_GRENADE,  // Aggiungi questo tipo per la granata
     FROG_ON_CROCODILE,
     CREATE_BULLET,
-    CREATE_GRENADE
+    CREATE_GRENADE,
+    PAUSE_GAME,
+    CONTINUE_GAME
 } ObjectType;
 
 #define FUORI -1000  // Valore speciale per indicare che l'oggetto è fuori

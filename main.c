@@ -83,6 +83,7 @@ int main() {
     int riverStartRow = LINES - 27;
     int totalGrenades = 20;
 
+    
     // Fork per la rana
     pid_t pid_frog = fork();
     if (pid_frog == -1) {
@@ -94,7 +95,7 @@ int main() {
         nodelay(stdscr, TRUE);
         timeout(0);
         close(fileds[0]);
-        frogProcess(&frog, fileds, toFrog);
+        frogProcess(&frog, fileds, toFrog); // Passa il puntatore alla rana
         exit(EXIT_SUCCESS);
     }
 
@@ -146,13 +147,14 @@ int main() {
     time_t bar_lastTick = time(NULL);
 
     while (game_win == 0 && lives > 0) {
+        
 
         if (read(fileds[0], &temp, sizeof(Entity)) > 0) {
+           
             if (temp.type == OBJECT_FROG) {
                 frog.y = temp.y;
                 frog.x = temp.x;
             } else if (temp.type == OBJECT_CROCODILE) {
-
                 crocs[temp.id].y = temp.y;
                 crocs[temp.id].x = temp.x;
                 if (temp.id == frog_on_crocodile) {
@@ -188,7 +190,6 @@ int main() {
                     bullets[temp.id].inGioco = 0;
                     kill(pid_bullets[temp.id], SIGKILL);
                 }
-
               
             } else if (temp.type == CREATE_GRENADE) {
                 int grenadesx[2] = {temp.x -1, temp.x + FROG_WIDTH};
@@ -196,8 +197,7 @@ int main() {
                 // Creazione della granata
 
                 for (int i = 0; i < 2; i++)
-                {
-                    
+                {  
                     temp.id = i_last_grenades; // Imposta l'ID del proiettile
                     temp.x = grenadesx[i]; // Imposta la posizione della granata
                     temp.type = OBJECT_GRENADE; // Imposta il tipo di proiettile
@@ -205,9 +205,6 @@ int main() {
                     temp.speed = 1; // Imposta la velocità della granata
                     temp.direction = grenade_direction[i]; // Imposta la direzione della granata
                     grenades[i_last_grenades] = temp; // Aggiungi il proiettile all'array
-                    
-    
-                    
                     pid_grenades[i_last_grenades] = fork();
                     if (pid_grenades[i_last_grenades] == -1) {
                         perror("Errore fork Granata");
@@ -230,9 +227,30 @@ int main() {
                     grenades[temp.id].inGioco = 0;
                     kill(pid_grenades[temp.id], SIGKILL);
                 }
-            }
-        } 
 
+            }else if(temp.type == PAUSE_GAME){
+                bool is_paused = 1;
+                kill(pid_frog, SIGSTOP); // Ferma il processo della rana
+                for (int i = 0; i < totalCrocs; i++) kill(pid_crocs[i], SIGSTOP);
+                for (int i = 0; i < MAX_BULLETS; i++) if (bullets[i].inGioco) kill(pid_bullets[i], SIGSTOP);
+                for (int i = 0; i < MAX_GRENADES; i++) if (grenades[i].inGioco) kill(pid_grenades[i], SIGSTOP);
+                clear();
+                mvprintw(LINES/2,   (COLS-9)/2,  "Gioco in pausa.");
+                mvprintw(LINES/2+1, (COLS-20)/2, "Premi 'p' per continuare.");
+                refresh();
+                nodelay(stdscr, FALSE); // Disabilita la modalità non bloccante
+
+             while (is_paused) {
+                if(getch() == 'p') {
+                    is_paused = 0;
+                    kill(pid_frog, SIGCONT); // Riprendi il processo della rana
+                    for (int i = 0; i < totalCrocs; i++) kill(pid_crocs[i], SIGCONT);
+                    for (int i = 0; i < MAX_BULLETS; i++) if (bullets[i].inGioco) kill(pid_bullets[i], SIGCONT);
+                    for (int i = 0; i < MAX_GRENADES; i++) if (grenades[i].inGioco) kill(pid_grenades[i], SIGCONT);
+                }
+            }
+        }
+        }
         time_t now = time(NULL);
         if (now - bar_lastTick >= 1) {
             bar_lastTick = now;
@@ -250,8 +268,7 @@ int main() {
                 bar_timeLeft = maxTime;
             }
         }
-
-        
+   
         if (frog.y >= riverStartRow && frog.y < riverStartRow + RIVER_HEIGHT) {
             for(int i = 0; i < totalCrocs; i++) {
                 if(

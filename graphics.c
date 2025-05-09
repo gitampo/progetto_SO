@@ -121,7 +121,7 @@ void drawTimer(int timeLeft, int maxTime, int bar_row, int bar_colStart) {
     attron(COLOR_PAIR(9));
     
     for (int i = 0; i < timeLeft; i++) {
-        mvprintw(bar_row, bar_colStart + i, "#"); // Cancella la barra precedente
+        mvprintw(bar_row, bar_colStart + i, "="); // Cancella la barra precedente
     }
     attroff(COLOR_PAIR(9));
     for (int i = timeLeft; i < maxTime - timeLeft; i++) {
