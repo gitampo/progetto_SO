@@ -68,8 +68,12 @@ void creaCrocodiles(Entity crocs[], int startCol, int endCol, int riverStartRow)
 }
 
 
-void crocThread(Entity *croc, int riverStart) {
-
+void* crocThread(void* arg) {
+    croc_args* args = (croc_args*)arg;
+    Entity* croc = &args->croc;
+    int riverStart = args->riverStart;
+    entity_buffer* fileds = args->fileds;
+   
     int startCol = (COLS - PAVEMENT_WIDTH) / 2;
     int endCol = startCol + PAVEMENT_WIDTH;
     
@@ -89,7 +93,7 @@ void crocThread(Entity *croc, int riverStart) {
 
     while (1) {
             // Aggiorna la posizione del coccodrillo
-        pthread_mutex_lock(&mutex);
+      
         croc->x += croc->direction * croc->speed; 
         if (croc->x < (startCol - CROC_WIDTH)) {
             croc->x = endCol;
@@ -98,7 +102,8 @@ void crocThread(Entity *croc, int riverStart) {
         }
 
         // Invia la posizione aggiornata del coccodrillo al padre tramite la pipe
-        
+        write_from_buffer(fileds, croc);
+
         // Possibilità di sparare un bullet: condizione casuale (circa 1% per iterazione)
         if ((croc->direction == 1 && croc->x + CROC_WIDTH < endCol ||
             croc->direction == -1 && croc->x > startCol) && rand() % 1000 < 10) {
@@ -112,9 +117,10 @@ void crocThread(Entity *croc, int riverStart) {
             bullet.direction = croc->direction;
             bullet.inGioco = 1;
             bullet.speed = 1; // Velocità del proiettile
+            write_from_buffer(fileds, &bullet); // Invia il bullet al processo padre
         }
 
-        pthread_mutex_unlock(&mutex);
+       
         usleep(100000);
         
 

@@ -41,7 +41,12 @@ void clearFrog(const Entity *frog) {
     } 
 } 
  
-void frogProcess(Entity *frog, int fileds[2], int toFrog[2]) {
+void* frogThread(void *arg) {
+    frog_args *args = (frog_args *)arg;
+    Entity *frog = &args->frog;
+    entity_buffer *fileds = args->fileds;
+    entity_buffer *toFrog = args->toFrog;
+
     frog->type = OBJECT_FROG;
     int validX_min = (COLS - PAVEMENT_WIDTH) / 2;
     int validX_max = validX_min + PAVEMENT_WIDTH - FROG_WIDTH;
@@ -55,7 +60,7 @@ void frogProcess(Entity *frog, int fileds[2], int toFrog[2]) {
     while (1) {
         int update = 1;
         
-        if (read(toFrog[0], &temp, sizeof(Entity)) > 0) {
+        if (read_from_buffer(toFrog, &temp)) {
             if (temp.type == FROG_ON_CROCODILE) {
                 frog->x = temp.x; // La rana si posiziona sopra il coccodrillo
                 onCroc = 1; // La rana è attaccata a un coccodrillo
@@ -74,7 +79,6 @@ void frogProcess(Entity *frog, int fileds[2], int toFrog[2]) {
         //if (ch != ERR) {
             int ch = getch(); // Leggi l'input dell'utente
 
-            pthread_mutex_lock(&mutex); // Blocca il mutex prima di accedere alla variabile condivisa
             switch(ch) {
                 case KEY_UP:
                     if (frog->y - FROG_HEIGHT >= validY_min)
@@ -123,7 +127,7 @@ void frogProcess(Entity *frog, int fileds[2], int toFrog[2]) {
 
            
         if (update || onCroc || death) {
-            //write(fileds[1], &payload, sizeof(Entity));
+            write_from_buffer(fileds, &payload);
             death = 0; // Reset dello stato di morte
             onCroc = 0; // Reset dello stato di attacco
         }
@@ -134,11 +138,10 @@ void frogProcess(Entity *frog, int fileds[2], int toFrog[2]) {
             frog->x = (COLS - FROG_WIDTH) / 2;
             frog->y = LINES - FROG_HEIGHT;
             payload = *frog; // Invia la rana aggiornata al processo padre
-            //write(fileds[1], &payload, sizeof(Entity));
+            write_from_buffer(fileds, &payload);
         }
 
 
-         pthread_mutex_unlock(&mutex); // Sblocca il mutex dopo aver finito di accedere alla variabile condivisa
 
 
         //usleep(2000); // Aspetta un po' prima di ridisegnare

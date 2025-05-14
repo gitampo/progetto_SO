@@ -1,6 +1,7 @@
 #ifndef CROC_H
 #define CROC_H
 
+#include "buffer.h"
 #include "entity.h"
 #include "graphics.h"
 
@@ -18,6 +19,6 @@ void drawCrocodiles(const Entity crocs[], int totalCrocs);
 void creaCrocodiles(Entity crocs[], int startCol, int endCol, int riverStartRow);
 
 // Funzione per gestire il movimento di un singolo Coccodrillo (da eseguire in un processo figlio)
-void crocProcess(Entity *croc, int pipeFD, int riverStart);
+void* crocThread(void* arg);
 
 #endif // CROC_H

@@ -16,25 +16,28 @@
 // Il bullet si muove in orizzontale e viene disegnato come un '*'.
 // Quando esce dallo schermo, il processo termina.
 
-void bulletProcess(Entity *bullet) {
+void* bulletThread( void *arg) {
+    bullet_args *args = (bullet_args *)arg;
+    Entity *bullet = &args->bullet;
+    entity_buffer *fileds = args->fileds;
+
     int startCol = (COLS - PAVEMENT_WIDTH) / 2;
     int endCol = startCol + PAVEMENT_WIDTH;
 
     int stop_update = 0; // Flag per fermare l'aggiornamento della posizione
 
     while (1) {
-        pthread_mutex_lock(&mutex);
+       
         bullet->x += bullet->direction * bullet->speed;
         // Controlla se il proiettile ha superato i bordi
         if (!stop_update && bullet->x >= endCol || bullet->x < startCol) {
             bullet->inGioco = 0;
             stop_update = 1; // Ferma l'aggiornamento della posizione
+            write_from_buffer(fileds, bullet);
         }
 
         if (bullet->inGioco)
-            pthread_mutex_unlock(&mutex);
-        
-        pthread_mutex_unlock(&mutex);
+            write_from_buffer(fileds, bullet);
         usleep(25000);  // Più veloce dei coccodrilli
     }
 }
@@ -61,7 +64,12 @@ int isBulletOutOfScreen(Entity *bullet) {
     return bullet->x < 0 || bullet->x >= COLS;
 }
 
-void grenadeProcess(Entity *grenade, int pipeFD) {
+void* grenadeThread(void *arg) {
+    grenade_args *args = (grenade_args *)arg;
+    Entity *grenade = &args->grenade;
+    entity_buffer *fileds = args->fileds;
+
+
     int startCol = (COLS - PAVEMENT_WIDTH) / 2;
     int endCol = startCol + PAVEMENT_WIDTH;
 
@@ -73,11 +81,11 @@ void grenadeProcess(Entity *grenade, int pipeFD) {
         if (!stop_update && grenade->x >= endCol || grenade->x < startCol) {
             grenade->inGioco = 0;
             stop_update = 1; // Ferma l'aggiornamento della posizione
-            write(pipeFD, grenade, sizeof(Entity));
+            write_from_buffer(fileds, grenade);
         }
 
         if (grenade->inGioco)
-            write(pipeFD, grenade, sizeof(Entity));
+            write_from_buffer(fileds, grenade);
         
         usleep(25000);  // Più veloce dei coccodrilli
     }

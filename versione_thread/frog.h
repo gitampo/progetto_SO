@@ -1,6 +1,7 @@
 #ifndef FROG_H
 #define FROG_H
 
+#include "buffer.h"
 #include "entity.h"
 #include "collision.h"  // Ora possiamo usare isFrogInTana()
 
@@ -16,7 +17,7 @@
 // Funzioni per la gestione della rana
 void drawFrog(const Entity *frog);
 void clearFrog(const Entity *frog);
-void frogProcess(Entity *frog, int fileds[2], int toFrog[2]);
+void* frogThread(void *arg);
 
 
 #endif // FROG_H

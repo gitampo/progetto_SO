@@ -14,11 +14,7 @@
 #include "entity.h"  
 #include "collision.h"
 #include "bullet.h"
-#include <pthread.h>
-
-extern pthread_mutex_t mutex; // Dichiarazione del mutex
-
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+#include "buffer.h"
 
 int main() {
     setlocale(LC_ALL, "");
@@ -46,24 +42,21 @@ int main() {
 
     nodelay(stdscr, TRUE);
 
-    pthread_t thread_frog;
-    pthread_t thread_crocs[totalCrocs];  // Array per memorizzare i pid dei coccodrilli
-    pthread_t thread_bullet;
-    pthread_t thread_grenade;
+    // creazione dei buffer
+    entity_buffer* fileds = create_buffer();
+    entity_buffer* toFrog = create_buffer();
 
-    int flags = fcntl(fileds[0], F_GETFL, 0);
-    int frogflags = fcntl(toFrog[0], F_GETFL, 0);
     int lives = 3;  
     int game_win = 0; // Flag per indicare se il gioco è vinto
     int holeRow     = HOLE_ROW;               // macro già in graphics.h
     int labelLen    = strlen("Lives:");
+    int startCol = (COLS - PAVEMENT_WIDTH) / 2;
     int heartsStart = startCol + labelLen + 1;
     int timerCol    = heartsStart + 3*2 + 2;   // tre cuori * 2 colonne + gap
     int taneRow  = ((LINES - 27) - PAVEMENT_HEIGHT) - TANE_HEIGHT;
     int heartRow = taneRow - 1;
     int maxTime = 60; // Tempo massimo in secondi
     int bar_timeLeft = maxTime; // Tempo rimanente
-    int startCol = (COLS - PAVEMENT_WIDTH) / 2;
     int endCol = startCol + PAVEMENT_WIDTH;
     int riverStartRow = LINES - 27;
     int totalGrenades = 20;
@@ -77,7 +70,12 @@ int main() {
     int frog_on_crocodile = -1;
     int taneOccupate[NUM_TANE] = {0};  // 0 = libera, 1 = occupata
     int totalCrocs = LANES * CROCS_PER_LANE; // 16 Coccodrilli totali
-   
+
+    pthread_t thread_frog;
+    pthread_t thread_crocs[totalCrocs];  // Array per memorizzare i thread dei coccodrilli
+    pthread_t thread_bullets[MAX_BULLETS];  // Array per memorizzare i thread dei proiettili
+    pthread_t thread_grenades[MAX_GRENADES];  // Array per memorizzare i thread delle granate
+
     time_t bar_lastTick = time(NULL);
       
     Entity frog;
@@ -90,15 +88,16 @@ int main() {
     Entity grenades[MAX_GRENADES];  // Usa MAX_BULLETS invece di MAX_PROJECTILES
     Entity temp;
 
-    fcntl(fileds[0], F_SETFL, O_NONBLOCK);
-    fcntl(toFrog[0], F_SETFL, O_NONBLOCK);
-
     // Calcola i limiti e inizializza l'area del fiume
-
-    pthread_create(&thread_frog, NULL, frogProcess, &frog);
+    frog_args f_args = {frog, fileds, toFrog};
+    pthread_create(&thread_frog, NULL, frogThread, &f_args);
     // Fork per la rana
     creaCrocodiles(crocs, startCol, endCol, riverStartRow);
-    pthread_create(&thread_crocs[i], NULL, crocThread, &crocs[i]);
+    for (int i = 0; i < totalCrocs; i++) {
+        croc_args c_args = {crocs[i], fileds, riverStartRow};
+
+        pthread_create(&thread_crocs[i], NULL, crocThread, &c_args);
+    }
 
     // Inizializzazione dell'array per i bullet 
     for (int i = 0; i < MAX_BULLETS; i++) {  // Usa MAX_BULLETS
@@ -112,7 +111,7 @@ int main() {
 
     while (game_win == 0 && lives > 0) {
 
-        if (read(fileds[0], &temp, sizeof(Entity)) > 0) {
+        if (read_from_buffer(fileds, &temp)) {
            
             if (temp.type == OBJECT_FROG) {
                 frog.y = temp.y;
@@ -124,7 +123,7 @@ int main() {
                     Entity frog_temp = frog;
                     frog_temp.type = FROG_ON_CROCODILE;
                     frog_temp.x = crocs[temp.id].x + (CROC_WIDTH / 2) - (FROG_WIDTH / 2); // La rana si posiziona sopra il coccodrillo
-                    write(toFrog[1], &frog_temp, sizeof(Entity));
+                    write_from_buffer(toFrog, &frog_temp); // Invia la rana al processo padre
                 }
             
             } else if (temp.type == CREATE_BULLET) {
@@ -133,7 +132,9 @@ int main() {
                 temp.id = i_last_bullet; // Imposta l'ID del proiettile
                 bullets[i_last_bullet] = temp; // Aggiungi il proiettile all'array
                 
-               pthread_create(&pid_bullets[i_last_bullet], NULL, bulletThread, &bullets[i_last_bullet]);
+                bullet_args b_args = {bullets[i_last_bullet], fileds};
+
+               pthread_create(&thread_bullets[i_last_bullet], NULL, bulletThread, &b_args);
 
                 i_last_bullet = (i_last_bullet + 1) % MAX_BULLETS; // Incrementa l'indice dell'ultimo proiettile creato
 
@@ -144,7 +145,7 @@ int main() {
                 } else {
                     // Rimuovi il proiettile dall'array
                     bullets[temp.id].inGioco = 0;
-                    kill(pid_bullets[temp.id], SIGKILL);
+                    pthread_cancel(thread_bullets[temp.id]);
                 }
               
             } else if (temp.type == CREATE_GRENADE) {
@@ -161,7 +162,10 @@ int main() {
                     temp.speed = 1; // Imposta la velocità della granata
                     temp.direction = grenade_direction[i]; // Imposta la direzione della granata
                     grenades[i_last_grenades] = temp; // Aggiungi il proiettile all'array
-                    pthread_create(&pid_grenades[i_last_grenades], NULL, grenadeThread, &grenades[i_last_grenades]);
+
+                    grenade_args g_args = {grenades[i_last_grenades], fileds};
+
+                    pthread_create(&thread_grenades[i_last_grenades], NULL, grenadeThread, &g_args);
 
                     i_last_grenades = (i_last_grenades + 1) % MAX_GRENADES; // Incrementa l'indice dell'ultimo proiettile creato
                 }
@@ -176,12 +180,12 @@ int main() {
                     
                 }
 
-            }else if(temp.type == PAUSE_GAME){
+            } /*else if(temp.type == PAUSE_GAME){
                 bool is_paused = 1;
                 
-                for (int i = 0; i < totalCrocs; i++) kill(pid_crocs[i], SIGSTOP);
-                for (int i = 0; i < MAX_BULLETS; i++) if (bullets[i].inGioco) kill(pid_bullets[i], SIGSTOP);
-                for (int i = 0; i < MAX_GRENADES; i++) if (grenades[i].inGioco) kill(pid_grenades[i], SIGSTOP);
+                for (int i = 0; i < totalCrocs; i++) kill(thread_crocs[i], SIGSTOP);
+                for (int i = 0; i < MAX_BULLETS; i++) if (bullets[i].inGioco) kill(thread_bullets[i], SIGSTOP);
+                for (int i = 0; i < MAX_GRENADES; i++) if (grenades[i].inGioco) kill(thread_grenades[i], SIGSTOP);
                 clear();
                 mvprintw(LINES/2,   (COLS-9)/2,  "Gioco in pausa.");
                 mvprintw(LINES/2+1, (COLS-20)/2, "Premi 'p' per continuare.");
@@ -192,12 +196,14 @@ int main() {
                 if(getch() == 'p') {
                     is_paused = 0;
                     
-                    for (int i = 0; i < totalCrocs; i++) kill(pid_crocs[i], SIGCONT);
-                    for (int i = 0; i < MAX_BULLETS; i++) if (bullets[i].inGioco) kill(pid_bullets[i], SIGCONT);
-                    for (int i = 0; i < MAX_GRENADES; i++) if (grenades[i].inGioco) kill(pid_grenades[i], SIGCONT);
+                    for (int i = 0; i < totalCrocs; i++) kill(thread_crocs[i], SIGCONT);
+                    for (int i = 0; i < MAX_BULLETS; i++) if (bullets[i].inGioco) kill(thread_bullets[i], SIGCONT);
+                    for (int i = 0; i < MAX_GRENADES; i++) if (grenades[i].inGioco) kill(thread_grenades[i], SIGCONT);
                 }
             }
         }
+        */
+
         }
         time_t now = time(NULL);
         if (now - bar_lastTick >= 1) {
@@ -258,9 +264,9 @@ int main() {
                 // La rana è colpita da un proiettile
                 frog.y = LINES - FROG_HEIGHT; 
                 frog.x = (COLS - FROG_WIDTH) / 2;
-                write(toFrog[1], &frog, sizeof(Entity)); // Invia la rana al processo padre
+                write_from_buffer(toFrog, &frog); // Invia la rana al processo padre
                 bullets[i].inGioco = 0; // Rimuovi il proiettile
-                kill(pid_bullets[i], SIGKILL); // Termina il processo del proiettile
+                pthread_cancel(thread_bullets[i]); // Termina il processo del proiettile
                 lives--;
                 bar_timeLeft = maxTime;
                break;
@@ -282,9 +288,9 @@ int main() {
                 }
                 if (bullets[i].y == grenades[j].y && bullets[i].x == grenades[j].x) {
                     bullets[i].inGioco = 0; // Rimuovi il proiettile
-                    kill(pid_bullets[i], SIGKILL); // Termina il processo del proiettile
+                    pthread_cancel(thread_bullets[i]); // Termina il processo del proiettile
                     grenades[j].inGioco = 0; // Rimuovi la granata
-                    kill(pid_grenades[j], SIGKILL); // Termina il processo della granata
+                    pthread_cancel(thread_grenades[j]); // Termina il processo della granata
                     break;
                 }
             }
@@ -403,6 +409,27 @@ if (frog.y == holeRow) {
         refresh();
 
     }
+
+     // Termina processi figli 
+    pthread_cancel(thread_frog);
+    for (int i = 0; i < totalCrocs; i++){
+        pthread_cancel(thread_crocs[i]); // Termina i processi dei coccodrilli
+    }
+
+    for (int i = 0; i < MAX_BULLETS; i++)
+    {
+        if (bullets[i].inGioco) {
+            pthread_cancel(thread_bullets[i]); // Termina i processi dei proiettili
+        }
+    }
+
+    for (int i = 0; i < MAX_GRENADES; i++)
+    {
+        if (grenades[i].inGioco) {
+            pthread_cancel(thread_grenades[i]); // Termina i processi delle granate
+        }
+    }
+    // Termina i processi delle granate
       
 
     if (game_win) {
@@ -429,9 +456,9 @@ if (frog.y == holeRow) {
         endwin();
     }
 
-    
-    wait(NULL);
-    wait(NULL);
+    destroy_buffer(fileds);
+    destroy_buffer(toFrog);
+   
     return 0;
 }
 
