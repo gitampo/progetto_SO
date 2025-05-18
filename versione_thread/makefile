@@ -5,7 +5,7 @@ CFLAGS = -Wall -Wextra -std=c99 -pedantic -O2 -g -pthread
 LDFLAGS = -I/opt/homebrew/opt/ncurses/include -L/opt/homebrew/opt/ncurses/lib -lncursesw
 
 # Elenco dei sorgenti: usa collision.c al posto di collisioni.c
-SOURCES = main.c bullet.c collision.c croc.c frog.c graphics.c
+SOURCES = main.c bullet.c collision.c croc.c frog.c graphics.c buffer.c 
 OBJECTS = $(SOURCES:.c=.o)
 
 # Nome dell'eseguibile
