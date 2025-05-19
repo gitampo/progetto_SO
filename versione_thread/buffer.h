@@ -18,6 +18,7 @@ typedef struct {
   Entity buffer[BUFFER_SIZE];
   int head;
   int tail;
+  pthread_mutex_t mutex; // Mutex per la sincronizzazione
 } entity_buffer;
 
 typedef struct frog_args {

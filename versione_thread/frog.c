@@ -42,6 +42,11 @@ void clearFrog(const Entity *frog) {
 } 
  
 void* frogThread(void *arg) {
+    WINDOW *inputwin = newwin(1, 1, 0, 0);
+    noecho();
+    nodelay(inputwin, TRUE);
+    keypad(inputwin, TRUE);
+
     frog_args *args = (frog_args *)arg;
     Entity *frog = &args->frog;
     entity_buffer *fileds = args->fileds;
@@ -77,8 +82,10 @@ void* frogThread(void *arg) {
         // Assicurati che il tipo sia sempre OBJECT_FROG
        
         //if (ch != ERR) {
-            int ch = getch(); // Leggi l'input dell'utente
-
+        //pthread_mutex_lock(&mutex);
+        //timeout(20);
+            int ch = wgetch(inputwin); //getch(); // Leggi l'input dell'utente
+        //pthread_mutex_unlock(&mutex);
             switch(ch) {
                 case KEY_UP:
                     if (frog->y - FROG_HEIGHT >= validY_min)
@@ -124,8 +131,7 @@ void* frogThread(void *arg) {
                     update = 0; // Mantieni la posizione corrente della rana
                     break;
             }
-
-           
+       
         if (update || onCroc || death) {
             write_from_buffer(fileds, &payload);
             death = 0; // Reset dello stato di morte
@@ -141,9 +147,8 @@ void* frogThread(void *arg) {
             write_from_buffer(fileds, &payload);
         }
 
-
-
-
-        //usleep(2000); // Aspetta un po' prima di ridisegnare
+       
     }
+
+     
 }

@@ -48,7 +48,7 @@ int main() {
 
     noecho();
 
-    keypad(stdscr, TRUE);
+    keypad(stdscr, FALSE);
 
     curs_set(0);
 
@@ -226,7 +226,6 @@ int main() {
     while (game_win == 0 && lives > 0) {
 
 
-
         if (read_from_buffer(fileds, &temp)) {
 
            
@@ -252,7 +251,7 @@ int main() {
                     frog_temp.x = crocs[temp.id].x + (CROC_WIDTH / 2) - (FROG_WIDTH / 2); // La rana si posiziona sopra il coccodrillo
 
                     write_from_buffer(toFrog, &frog_temp); // Invia la rana al processo padre
-
+                        
                 }
 
             
@@ -273,7 +272,7 @@ int main() {
 
 
 
-               pthread_create(&thread_bullets[i_last_bullet], NULL, bulletThread, &b_args[i_last_bullet]);
+                pthread_create(&thread_bullets[i_last_bullet], NULL, bulletThread, &b_args[i_last_bullet]);
 
 
 
@@ -491,7 +490,7 @@ int main() {
 
                 frog.x = (COLS - FROG_WIDTH) / 2;
 
-        
+        write_from_buffer(toFrog, &frog); // Invia la rana al processo padre
 
                 lives--;
 
@@ -552,8 +551,6 @@ int main() {
 
 
         if (lives <= 0) {
-
-            
 
             break;
 
@@ -699,9 +696,9 @@ if (frog.y == holeRow) {
 
 	
 
-    erase();
+erase();
 
-	pthread_mutex_lock(&mutex);
+pthread_mutex_lock(&mutex);
 
 
     
@@ -823,17 +820,16 @@ if (frog.y == holeRow) {
 
 
 
-  pthread_mutex_unlock (&mutex);
-   
-
-
+        
+        
+        pthread_mutex_unlock (&mutex);
+        
         refresh();
         
        
 
 
-
-        usleep(20000); // Aspetta un po' prima di ridisegnare
+        //usleep(10000); // Aspetta un po' prima di ridisegnare
 
 
 
