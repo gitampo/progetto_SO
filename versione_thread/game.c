@@ -297,55 +297,32 @@
 
 
 
-            } /*else if(temp.type == PAUSE_GAME){
-
-                bool is_paused = 1;
-
-                
-
-                for (int i = 0; i < totalCrocs; i++) kill(thread_crocs[i], SIGSTOP);
-
-                for (int i = 0; i < MAX_BULLETS; i++) if (bullets[i].inGioco) kill(thread_bullets[i], SIGSTOP);
-
-                for (int i = 0; i < MAX_GRENADES; i++) if (grenades[i].inGioco) kill(thread_grenades[i], SIGSTOP);
-
+            } else if (temp.type == PAUSE_GAME) {
+                 
+                // Schermata di pausa
                 clear();
-
-                mvprintw(LINES/2,   (COLS-9)/2,  "Gioco in pausa.");
-
-                mvprintw(LINES/2+1, (COLS-20)/2, "Premi 'p' per continuare.");
-
+                mvprintw(LINES / 2,   (COLS - 9) / 2,  "Gioco in pausa.");
+                mvprintw(LINES / 2 + 1, (COLS - 25) / 2, "Premi 'p' per continuare.");
                 refresh();
+                nodelay(stdscr, FALSE); // disabilita input non bloccante
+                pthread_mutex_lock(&toFrog->mutex); // blocca il mutex per evitare conflitti
+                pthread_mutex_lock(&fileds->mutex); // blocca il mutex per evitare conflitti
+                int ch;
+                do {
+                    ch = getch();
+                } while (ch != 'p');
 
-                nodelay(stdscr, FALSE); // Disabilita la modalità non bloccante
+                pthread_mutex_unlock(&fileds->mutex);
+                pthread_mutex_unlock(&toFrog->mutex);
 
-
-
-             while (is_paused) {
-
-                if(getch() == 'p') {
-
-                    is_paused = 0;
-
-                    
-
-                    for (int i = 0; i < totalCrocs; i++) kill(thread_crocs[i], SIGCONT);
-
-                    for (int i = 0; i < MAX_BULLETS; i++) if (bullets[i].inGioco) kill(thread_bullets[i], SIGCONT);
-
-                    for (int i = 0; i < MAX_GRENADES; i++) if (grenades[i].inGioco) kill(thread_grenades[i], SIGCONT);
-
-                }
-
+                nodelay(stdscr, TRUE); // ripristina input non bloccante
             }
 
         }
-
-        */
-
+    
 
 
-        }
+        
 
         time_t now = time(NULL);
 
